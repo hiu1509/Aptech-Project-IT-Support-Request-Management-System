@@ -1,6 +1,29 @@
 @ITSupport.API_HostAddress = http://localhost:5287
 
+### Test Weather Forecast
 GET {{ITSupport.API_HostAddress}}/weatherforecast/
 Accept: application/json
 
 ###
+
+### Login Admin
+POST {{ITSupport.API_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@itsupport.local",
+  "password": "Admin@123"
+}
+
+###
+
+### Test /me - chưa gửi JWT
+GET {{ITSupport.API_HostAddress}}/api/auth/me
+Accept: application/json
+
+###
+
+### Test /me - có JWT
+GET {{ITSupport.API_HostAddress}}/api/auth/me
+Accept: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
