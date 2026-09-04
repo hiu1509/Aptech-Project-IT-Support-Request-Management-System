@@ -1,0 +1,1345 @@
+openapi: 3.0.3
+info:
+  title: IT Support Request Management System API
+  description: >
+    Hợp đồng API (contract) giữa Frontend và Backend cho hệ thống Quản lý yêu cầu
+    hỗ trợ CNTT. Được soạn dựa trên "Thiet_ke_CSDL_va_Workflow_IT_Support.xlsx"
+    (5 sheet: Thiết kế CSDL, Quan hệ CSDL, Workflow trạng thái, Danh mục trạng thái,
+    Mapping UC-Bảng). Backend cần implement đúng theo spec này; Frontend build UI
+    và gọi API theo đúng path/schema này để không lệch nhau khi ráp lại.
+  version: "0.1.0"
+servers:
+  - url: http://localhost:5287
+    description: Local dev (ITSupport.API)
+
+tags:
+  - name: Auth
+    description: UC01, UC02 - Đăng nhập, quên mật khẩu
+  - name: Users
+    description: UC03, UC04 - Quản lý tài khoản, phân quyền
+  - name: Catalogs
+    description: UC25, UC26, UC30 - Danh mục loại yêu cầu, mức ưu tiên, nhóm IT
+  - name: Requests
+    description: UC05-UC20, UC28 - Vòng đời yêu cầu hỗ trợ
+  - name: Comments & Attachments
+    description: UC21, UC22 - Bình luận, đính kèm file
+  - name: History
+    description: UC23 - Lịch sử xử lý / audit trail
+  - name: Dashboard & Reports
+    description: UC27, UC29 - Dashboard, báo cáo
+
+security:
+  - bearerAuth: []
+
+paths:
+  # ============================= AUTH (UC01, UC02) =============================
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: "UC01 - Đăng nhập"
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Đăng nhập thành công
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/auth/forgot-password:
+    post:
+      tags: [Auth]
+      summary: "UC02 - Bước 1: Yêu cầu đặt lại mật khẩu (gửi email chứa token)"
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+      responses:
+        "200":
+          description: >
+            Luôn trả 200 (kể cả email không tồn tại) để tránh lộ thông tin tài khoản.
+            Nếu email tồn tại: tạo PasswordResetTokens + ghi EmailNotifications (EventCode=FORGOT_PASSWORD).
+
+  /api/auth/reset-password:
+    post:
+      tags: [Auth]
+      summary: "UC02 - Bước 2: Xác nhận token, đặt mật khẩu mới"
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, newPassword]
+              properties:
+                token: { type: string }
+                newPassword: { type: string, minLength: 8 }
+      responses:
+        "200": { description: Đặt lại mật khẩu thành công }
+        "400": { description: Token không hợp lệ hoặc đã hết hạn (ExpiresAt/UsedAt) }
+
+  /api/auth/me:
+    get:
+      tags: [Auth]
+      summary: Lấy thông tin người dùng đang đăng nhập (từ JWT)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CurrentUser"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  # ============================= USERS (UC03, UC04) =============================
+  /api/users:
+    get:
+      tags: [Users]
+      summary: "UC03 - Danh sách tài khoản (Admin)"
+      parameters:
+        - $ref: "#/components/parameters/PageNumber"
+        - $ref: "#/components/parameters/PageSize"
+        - name: keyword
+          in: query
+          schema: { type: string }
+          description: Tìm theo FullName/Email/EmployeeCode
+        - name: departmentId
+          in: query
+          schema: { type: integer }
+        - name: roleCode
+          in: query
+          schema: { type: string }
+        - name: isActive
+          in: query
+          schema: { type: boolean }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PagedUsers"
+    post:
+      tags: [Users]
+      summary: "UC03 - Tạo tài khoản mới (Admin)"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "409": { description: "Email hoặc EmployeeCode đã tồn tại" }
+
+  /api/users/{userId}:
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        schema: { type: integer }
+    get:
+      tags: [Users]
+      summary: "UC03 - Chi tiết tài khoản"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    put:
+      tags: [Users]
+      summary: "UC03 - Cập nhật tài khoản (thông tin, khóa/mở khóa)"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/users/{userId}/roles:
+    post:
+      tags: [Users]
+      summary: "UC04 - Gán vai trò cho người dùng"
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [roleId]
+              properties:
+                roleId: { type: integer }
+      responses:
+        "200":
+          description: OK - trả về danh sách role hiện tại của user
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Role" }
+
+  /api/users/{userId}/roles/{roleId}:
+    delete:
+      tags: [Users]
+      summary: "UC04 - Thu hồi vai trò của người dùng"
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: roleId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "204": { description: No Content }
+
+  /api/roles:
+    get:
+      tags: [Users]
+      summary: Danh mục vai trò (Admin, Employee, Coordinator, ITLeader, ITStaff)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Role" }
+
+  /api/departments:
+    get:
+      tags: [Users]
+      summary: Danh mục phòng/ban
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Department" }
+
+  # ============================= CATALOGS (UC25, UC26, UC30) =============================
+  /api/categories:
+    get:
+      tags: [Catalogs]
+      summary: "UC25 - Danh mục loại yêu cầu"
+      parameters:
+        - name: isActive
+          in: query
+          schema: { type: boolean }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/RequestCategory" }
+    post:
+      tags: [Catalogs]
+      summary: "UC25 - Tạo loại yêu cầu (Admin)"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpsertRequestCategoryRequest" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RequestCategory" }
+
+  /api/categories/{categoryId}:
+    parameters:
+      - name: categoryId
+        in: path
+        required: true
+        schema: { type: integer }
+    put:
+      tags: [Catalogs]
+      summary: "UC25 - Cập nhật loại yêu cầu (Admin)"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpsertRequestCategoryRequest" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RequestCategory" }
+    delete:
+      tags: [Catalogs]
+      summary: "UC25 - Vô hiệu hóa loại yêu cầu (soft delete, set IsActive=false)"
+      responses:
+        "204": { description: No Content }
+
+  /api/priorities:
+    get:
+      tags: [Catalogs]
+      summary: "UC26 - Danh mục mức ưu tiên"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Priority" }
+    post:
+      tags: [Catalogs]
+      summary: "UC26 - Tạo mức ưu tiên (Admin)"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpsertPriorityRequest" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Priority" }
+
+  /api/priorities/{priorityId}:
+    parameters:
+      - name: priorityId
+        in: path
+        required: true
+        schema: { type: integer }
+    put:
+      tags: [Catalogs]
+      summary: "UC26 - Cập nhật mức ưu tiên (Admin)"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpsertPriorityRequest" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Priority" }
+
+  /api/request-statuses:
+    get:
+      tags: [Requests]
+      summary: Danh mục 12 trạng thái chuẩn (chỉ đọc, seed sẵn)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/RequestStatus" }
+
+  /api/it-groups:
+    get:
+      tags: [Catalogs]
+      summary: "UC30 - Danh sách nhóm IT chuyên môn"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ITGroup" }
+    post:
+      tags: [Catalogs]
+      summary: "UC30 - Tạo nhóm IT (Admin)"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpsertITGroupRequest" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ITGroup" }
+
+  /api/it-groups/{groupId}/members:
+    parameters:
+      - name: groupId
+        in: path
+        required: true
+        schema: { type: integer }
+    get:
+      tags: [Catalogs]
+      summary: "UC30 - Danh sách thành viên nhóm IT"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ITGroupMember" }
+    post:
+      tags: [Catalogs]
+      summary: "UC30 - Thêm thành viên vào nhóm IT (Admin/ITLeader)"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId, memberRole]
+              properties:
+                userId: { type: integer }
+                memberRole:
+                  type: string
+                  enum: [LEADER, MEMBER]
+      responses:
+        "201": { description: Created }
+
+  /api/it-groups/{groupId}/members/{userId}:
+    delete:
+      tags: [Catalogs]
+      summary: "UC30 - Gỡ thành viên khỏi nhóm IT"
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: userId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "204": { description: No Content }
+
+  # ============================= REQUESTS CORE WORKFLOW =============================
+  /api/requests:
+    get:
+      tags: [Requests]
+      summary: "UC06, UC28 - Danh sách / tìm kiếm / lọc yêu cầu"
+      description: >
+        Kết quả trả về được lọc theo phạm vi truy cập của role:
+        Employee chỉ thấy request của mình (RequesterId = current user);
+        Coordinator thấy request mình phụ trách (CurrentCoordinatorId);
+        ITLeader/ITStaff thấy request của nhóm/của mình (CurrentITGroupId, CurrentAssigneeId);
+        Admin thấy tất cả.
+      parameters:
+        - $ref: "#/components/parameters/PageNumber"
+        - $ref: "#/components/parameters/PageSize"
+        - name: keyword
+          in: query
+          schema: { type: string }
+          description: Tìm theo RequestCode/Title
+        - name: statusCode
+          in: query
+          schema: { type: string }
+        - name: categoryId
+          in: query
+          schema: { type: integer }
+        - name: priorityId
+          in: query
+          schema: { type: integer }
+        - name: departmentId
+          in: query
+          schema: { type: integer }
+        - name: itGroupId
+          in: query
+          schema: { type: integer }
+        - name: assigneeId
+          in: query
+          schema: { type: integer }
+        - name: fromDate
+          in: query
+          schema: { type: string, format: date }
+        - name: toDate
+          in: query
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PagedSupportRequests" }
+    post:
+      tags: [Requests]
+      summary: "UC05 - Tạo yêu cầu hỗ trợ"
+      description: >
+        Tạo SupportRequests với StatusId = NEW. Sinh RequestCode tự động
+        (vd REQ-2026-000123). Ghi RequestHistories (ActionCode=CREATE, ToStatus=NEW).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateSupportRequestRequest" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SupportRequest" }
+
+  /api/requests/{requestId}:
+    parameters:
+      - name: requestId
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    get:
+      tags: [Requests]
+      summary: "UC07 - Xem chi tiết yêu cầu (kèm progress/comments/attachments rút gọn)"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SupportRequestDetail" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/requests/{requestId}/assign-coordinator:
+    post:
+      tags: [Requests]
+      summary: "UC08 - Phân công Người phụ trách (Admin / hệ thống tự động)"
+      description: "Trạng thái: NEW -> WAITING_COORDINATOR"
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [coordinatorUserId]
+              properties:
+                coordinatorUserId: { type: integer }
+      responses:
+        "200": { $ref: "#/components/responses/RequestUpdated" }
+        "409": { $ref: "#/components/responses/InvalidTransition" }
+
+  /api/requests/{requestId}/accept:
+    post:
+      tags: [Requests]
+      summary: "UC09 - Người phụ trách tiếp nhận yêu cầu"
+      description: "Trạng thái: WAITING_COORDINATOR -> ACCEPTED"
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      responses:
+        "200": { $ref: "#/components/responses/RequestUpdated" }
+        "409": { $ref: "#/components/responses/InvalidTransition" }
+
+  /api/requests/{requestId}/request-info:
+    post:
+      tags: [Requests]
+      summary: "UC10 - Người phụ trách yêu cầu bổ sung thông tin"
+      description: "Trạng thái: ACCEPTED -> NEED_INFO. Gửi EmailNotifications cho Employee."
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message: { type: string }
+      responses:
+        "200": { $ref: "#/components/responses/RequestUpdated" }
+        "409": { $ref: "#/components/responses/InvalidTransition" }
+
+  /api/requests/{requestId}/supplement:
+    post:
+      tags: [Requests]
+      summary: "(Khuyến nghị bổ sung UC) Nhân viên bổ sung thông tin theo yêu cầu"
+      description: "Trạng thái: NEED_INFO -> ACCEPTED. Ghi RequestComments + RequestAttachments nếu có."
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content: { type: string }
+      responses:
+        "200": { $ref: "#/components/responses/RequestUpdated" }
+        "409": { $ref: "#/components/responses/InvalidTransition" }
+
+  /api/requests/{requestId}/classify:
+    post:
+      tags: [Requests]
+      summary: "UC11 - Phân loại yêu cầu"
+      description: "Trạng thái: ACCEPTED -> CLASSIFIED. Cập nhật CategoryId."
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [categoryId]
+              properties:
+                categoryId: { type: integer }
+      responses:
+        "200": { $ref: "#/components/responses/RequestUpdated" }
+        "409": { $ref: "#/components/responses/InvalidTransition" }
+
+  /api/requests/{requestId}/assign-group:
+    post:
+      tags: [Requests]
+      summary: "UC12 - Chuyển nhóm IT"
+      description: >
+        Trạng thái: CLASSIFIED -> WAITING_IT_ASSIGNMENT. Cập nhật CurrentITGroupId,
+        insert RequestAssignments(AssignmentType=IT_GROUP), gửi email Trưởng nhóm.
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [itGroupId]
+              properties:
+                itGroupId: { type: integer }
+      responses:
+        "200": { $ref: "#/components/responses/RequestUpdated" }
+        "409": { $ref: "#/components/responses/InvalidTransition" }
+
+  /api/requests/{requestId}/assign-staff:
+    post:
+      tags: [Requests]
+      summary: "UC13 - Trưởng nhóm IT phân công Nhân viên IT"
+      description: >
+        Trạng thái: WAITING_IT_ASSIGNMENT -> ASSIGNED. Cập nhật CurrentAssigneeId +
+        ExpectedCompletionAt, insert RequestAssignments(AssignmentType=IT_STAFF).
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [assigneeUserId]
+              properties:
+                assigneeUserId: { type: integer }
+                expectedCompletionAt: { type: string, format: date-time }
+      responses:
+        "200": { $ref: "#/components/responses/RequestUpdated" }
+        "409": { $ref: "#/components/responses/InvalidTransition" }
+
+  /api/requests/{requestId}/start:
+    post:
+      tags: [Requests]
+      summary: "UC14 - Nhân viên IT nhận xử lý"
+      description: "Trạng thái: ASSIGNED -> IN_PROGRESS"
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      responses:
+        "200": { $ref: "#/components/responses/RequestUpdated" }
+        "409": { $ref: "#/components/responses/InvalidTransition" }
+
+  /api/requests/{requestId}/progress:
+    post:
+      tags: [Requests]
+      summary: "UC15 - Cập nhật tiến độ xử lý"
+      description: "Trạng thái giữ nguyên IN_PROGRESS. Insert RequestProgress (+ Attachments nếu có)."
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [progressContent]
+              properties:
+                progressContent: { type: string }
+                resultContent: { type: string, nullable: true }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RequestProgress" }
+
+  /api/requests/{requestId}/complete:
+    post:
+      tags: [Requests]
+      summary: "UC16 - Nhân viên IT hoàn thành xử lý"
+      description: "Trạng thái: IN_PROGRESS -> WAITING_INTERNAL_REVIEW. Thông báo Người phụ trách."
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      responses:
+        "200": { $ref: "#/components/responses/RequestUpdated" }
+        "409": { $ref: "#/components/responses/InvalidTransition" }
+
+  /api/requests/{requestId}/review/pass:
+    post:
+      tags: [Requests]
+      summary: "UC17 - Người phụ trách kiểm tra nội bộ: đạt"
+      description: "Trạng thái: WAITING_INTERNAL_REVIEW -> WAITING_USER_CONFIRMATION. Gửi email cho người gửi."
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      responses:
+        "200": { $ref: "#/components/responses/RequestUpdated" }
+        "409": { $ref: "#/components/responses/InvalidTransition" }
+
+  /api/requests/{requestId}/review/fail:
+    post:
+      tags: [Requests]
+      summary: "UC18 - Người phụ trách kiểm tra nội bộ: không đạt"
+      description: "Trạng thái: WAITING_INTERNAL_REVIEW -> REWORK. Tăng ReworkCount, thông báo Nhân viên IT."
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: { type: string }
+      responses:
+        "200": { $ref: "#/components/responses/RequestUpdated" }
+        "409": { $ref: "#/components/responses/InvalidTransition" }
+
+  /api/requests/{requestId}/rework/resume:
+    post:
+      tags: [Requests]
+      summary: "Nhân viên IT mở lại xử lý sau REWORK"
+      description: "Trạng thái: REWORK -> IN_PROGRESS"
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      responses:
+        "200": { $ref: "#/components/responses/RequestUpdated" }
+        "409": { $ref: "#/components/responses/InvalidTransition" }
+
+  /api/requests/{requestId}/confirm:
+    post:
+      tags: [Requests]
+      summary: "UC19 - Người gửi xác nhận kết quả đạt"
+      description: "Trạng thái: WAITING_USER_CONFIRMATION -> COMPLETED. Set CompletedAt."
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      responses:
+        "200": { $ref: "#/components/responses/RequestUpdated" }
+        "409": { $ref: "#/components/responses/InvalidTransition" }
+
+  /api/requests/{requestId}/reject:
+    post:
+      tags: [Requests]
+      summary: "UC20 - Người gửi phản hồi chưa đạt"
+      description: "Trạng thái: WAITING_USER_CONFIRMATION -> REWORK. Tăng ReworkCount, lưu phản hồi/file."
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [feedback]
+              properties:
+                feedback: { type: string }
+      responses:
+        "200": { $ref: "#/components/responses/RequestUpdated" }
+        "409": { $ref: "#/components/responses/InvalidTransition" }
+
+  # ============================= COMMENTS / ATTACHMENTS / HISTORY =============================
+  /api/requests/{requestId}/comments:
+    parameters: [{ $ref: "#/components/parameters/RequestId" }]
+    get:
+      tags: [Comments & Attachments]
+      summary: "UC21 - Danh sách bình luận của yêu cầu"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/RequestComment" }
+    post:
+      tags: [Comments & Attachments]
+      summary: "UC21 - Gửi bình luận"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content: { type: string }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RequestComment" }
+
+  /api/requests/{requestId}/attachments:
+    parameters: [{ $ref: "#/components/parameters/RequestId" }]
+    get:
+      tags: [Comments & Attachments]
+      summary: "UC22 - Danh sách file đính kèm"
+      parameters:
+        - name: contextType
+          in: query
+          schema:
+            type: string
+            enum: [REQUEST, PROGRESS, COMMENT, FEEDBACK]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/RequestAttachment" }
+    post:
+      tags: [Comments & Attachments]
+      summary: "UC22 - Tải lên file đính kèm (multipart/form-data)"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file, contextType]
+              properties:
+                file: { type: string, format: binary }
+                contextType:
+                  type: string
+                  enum: [REQUEST, PROGRESS, COMMENT, FEEDBACK]
+                relatedRecordId:
+                  type: integer
+                  format: int64
+                  nullable: true
+                  description: Id của RequestProgress/RequestComment liên quan (nếu có)
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RequestAttachment" }
+
+  /api/requests/{requestId}/history:
+    get:
+      tags: [History]
+      summary: "UC23 - Xem lịch sử xử lý / timeline (audit)"
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/RequestHistory" }
+
+  # ============================= DASHBOARD / REPORTS =============================
+  /api/dashboard/summary:
+    get:
+      tags: [Dashboard & Reports]
+      summary: "UC27 - Dashboard tổng quan"
+      description: >
+        Số liệu tổng hợp theo phạm vi role hiện tại: tổng số yêu cầu theo từng
+        RequestStatuses, theo RequestCategories, theo Departments; số quá hạn SLA
+        (so ExpectedCompletionAt với thời điểm hiện tại khi status chưa Closed).
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DashboardSummary" }
+
+  /api/reports/requests:
+    get:
+      tags: [Dashboard & Reports]
+      summary: "UC29 - Báo cáo yêu cầu theo khoảng thời gian"
+      parameters:
+        - name: fromDate
+          in: query
+          required: true
+          schema: { type: string, format: date }
+        - name: toDate
+          in: query
+          required: true
+          schema: { type: string, format: date }
+        - name: groupBy
+          in: query
+          schema:
+            type: string
+            enum: [status, category, department, itGroup, priority]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReportResult" }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    RequestId:
+      name: requestId
+      in: path
+      required: true
+      schema: { type: integer, format: int64 }
+    PageNumber:
+      name: pageNumber
+      in: query
+      schema: { type: integer, default: 1, minimum: 1 }
+    PageSize:
+      name: pageSize
+      in: query
+      schema: { type: integer, default: 20, minimum: 1, maximum: 100 }
+
+  responses:
+    Unauthorized:
+      description: Chưa đăng nhập hoặc token không hợp lệ
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    NotFound:
+      description: Không tìm thấy dữ liệu
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    InvalidTransition:
+      description: >
+        Thao tác không hợp lệ với trạng thái hiện tại của yêu cầu (vd cố Accept
+        một request đã COMPLETED). Xem docs/API_GUIDE.md - bảng chuyển trạng thái.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    RequestUpdated:
+      description: Cập nhật thành công, trả về SupportRequest mới nhất
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/SupportRequest" }
+
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        message: { type: string }
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items: { type: string }
+
+    # ---------- Auth / Users ----------
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, format: password }
+
+    LoginResponse:
+      type: object
+      properties:
+        message: { type: string }
+        token: { type: string }
+        user: { $ref: "#/components/schemas/CurrentUser" }
+
+    CurrentUser:
+      type: object
+      properties:
+        id: { type: integer }
+        fullName: { type: string }
+        email: { type: string }
+        roles:
+          type: array
+          items: { type: string }
+          example: ["Coordinator"]
+        department: { type: string, nullable: true }
+
+    Department:
+      type: object
+      properties:
+        id: { type: integer }
+        code: { type: string }
+        name: { type: string }
+        description: { type: string, nullable: true }
+        isActive: { type: boolean }
+
+    Role:
+      type: object
+      properties:
+        id: { type: integer }
+        code:
+          type: string
+          enum: [ADMIN, EMPLOYEE, COORDINATOR, IT_LEADER, IT_STAFF]
+        name: { type: string }
+        description: { type: string, nullable: true }
+
+    User:
+      type: object
+      properties:
+        id: { type: integer }
+        employeeCode: { type: string, nullable: true }
+        fullName: { type: string }
+        email: { type: string }
+        department: { $ref: "#/components/schemas/Department" }
+        roles:
+          type: array
+          items: { $ref: "#/components/schemas/Role" }
+        isActive: { type: boolean }
+        lastLoginAt: { type: string, format: date-time, nullable: true }
+        createdAt: { type: string, format: date-time }
+
+    PagedUsers:
+      allOf:
+        - $ref: "#/components/schemas/PagedMeta"
+        - type: object
+          properties:
+            items:
+              type: array
+              items: { $ref: "#/components/schemas/User" }
+
+    CreateUserRequest:
+      type: object
+      required: [fullName, email, password, roleIds]
+      properties:
+        employeeCode: { type: string, nullable: true }
+        fullName: { type: string }
+        email: { type: string, format: email }
+        password: { type: string }
+        departmentId: { type: integer, nullable: true }
+        roleIds:
+          type: array
+          items: { type: integer }
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        fullName: { type: string }
+        departmentId: { type: integer, nullable: true }
+        isActive: { type: boolean }
+
+    # ---------- Catalogs ----------
+    RequestCategory:
+      type: object
+      properties:
+        id: { type: integer }
+        code: { type: string }
+        name: { type: string }
+        parentCategoryId: { type: integer, nullable: true }
+        defaultITGroupId: { type: integer, nullable: true }
+        description: { type: string, nullable: true }
+        isActive: { type: boolean }
+
+    UpsertRequestCategoryRequest:
+      type: object
+      required: [code, name]
+      properties:
+        code: { type: string }
+        name: { type: string }
+        parentCategoryId: { type: integer, nullable: true }
+        defaultITGroupId: { type: integer, nullable: true }
+        description: { type: string, nullable: true }
+
+    Priority:
+      type: object
+      properties:
+        id: { type: integer }
+        code: { type: string }
+        name: { type: string }
+        level: { type: integer, description: "Thứ tự ưu tiên" }
+        targetResolutionHours: { type: integer, nullable: true }
+        isActive: { type: boolean }
+
+    UpsertPriorityRequest:
+      type: object
+      required: [code, name, level]
+      properties:
+        code: { type: string }
+        name: { type: string }
+        level: { type: integer }
+        targetResolutionHours: { type: integer, nullable: true }
+
+    ITGroup:
+      type: object
+      properties:
+        id: { type: integer }
+        code: { type: string }
+        name: { type: string }
+        description: { type: string, nullable: true }
+        isActive: { type: boolean }
+
+    UpsertITGroupRequest:
+      type: object
+      required: [code, name]
+      properties:
+        code: { type: string }
+        name: { type: string }
+        description: { type: string, nullable: true }
+
+    ITGroupMember:
+      type: object
+      properties:
+        itGroupId: { type: integer }
+        userId: { type: integer }
+        userFullName: { type: string }
+        memberRole: { type: string, enum: [LEADER, MEMBER] }
+        isActive: { type: boolean }
+        joinedAt: { type: string, format: date-time }
+
+    RequestStatus:
+      type: object
+      properties:
+        id: { type: integer }
+        code:
+          type: string
+          enum:
+            [
+              NEW,
+              WAITING_COORDINATOR,
+              ACCEPTED,
+              NEED_INFO,
+              CLASSIFIED,
+              WAITING_IT_ASSIGNMENT,
+              ASSIGNED,
+              IN_PROGRESS,
+              WAITING_INTERNAL_REVIEW,
+              WAITING_USER_CONFIRMATION,
+              REWORK,
+              COMPLETED,
+            ]
+        name: { type: string }
+        displayOrder: { type: integer }
+        isClosed: { type: boolean }
+
+    # ---------- Support Requests ----------
+    SupportRequest:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        requestCode: { type: string, example: "REQ-2026-000123" }
+        title: { type: string }
+        description: { type: string }
+        requester: { $ref: "#/components/schemas/UserRef" }
+        requesterDepartment: { $ref: "#/components/schemas/Department" }
+        category: { $ref: "#/components/schemas/RequestCategory" }
+        priority: { $ref: "#/components/schemas/Priority" }
+        status: { $ref: "#/components/schemas/RequestStatus" }
+        desiredDate: { type: string, format: date, nullable: true }
+        currentCoordinator:
+          type: object
+          allOf: [{ $ref: "#/components/schemas/UserRef" }]
+          nullable: true
+        currentITGroup:
+          type: object
+          allOf: [{ $ref: "#/components/schemas/ITGroup" }]
+          nullable: true
+        currentAssignee:
+          type: object
+          allOf: [{ $ref: "#/components/schemas/UserRef" }]
+          nullable: true
+        expectedCompletionAt: { type: string, format: date-time, nullable: true }
+        reworkCount: { type: integer }
+        completedAt: { type: string, format: date-time, nullable: true }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time, nullable: true }
+
+    SupportRequestDetail:
+      allOf:
+        - $ref: "#/components/schemas/SupportRequest"
+        - type: object
+          properties:
+            assignmentHistory:
+              type: array
+              items: { $ref: "#/components/schemas/RequestAssignment" }
+            recentProgress:
+              type: array
+              items: { $ref: "#/components/schemas/RequestProgress" }
+            recentComments:
+              type: array
+              items: { $ref: "#/components/schemas/RequestComment" }
+            attachments:
+              type: array
+              items: { $ref: "#/components/schemas/RequestAttachment" }
+
+    UserRef:
+      type: object
+      properties:
+        id: { type: integer }
+        fullName: { type: string }
+        email: { type: string }
+
+    PagedSupportRequests:
+      allOf:
+        - $ref: "#/components/schemas/PagedMeta"
+        - type: object
+          properties:
+            items:
+              type: array
+              items: { $ref: "#/components/schemas/SupportRequest" }
+
+    PagedMeta:
+      type: object
+      properties:
+        pageNumber: { type: integer }
+        pageSize: { type: integer }
+        totalItems: { type: integer }
+        totalPages: { type: integer }
+
+    CreateSupportRequestRequest:
+      type: object
+      required: [title, description, priorityId]
+      properties:
+        title: { type: string, maxLength: 250 }
+        description: { type: string }
+        categoryId: { type: integer, nullable: true }
+        priorityId: { type: integer }
+        desiredDate: { type: string, format: date, nullable: true }
+
+    RequestAssignment:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        requestId: { type: integer, format: int64 }
+        assignmentType: { type: string, enum: [COORDINATOR, IT_GROUP, IT_STAFF] }
+        assignedTo: { $ref: "#/components/schemas/UserRef" }
+        assignedToGroup: { $ref: "#/components/schemas/ITGroup" }
+        assignedBy: { $ref: "#/components/schemas/UserRef" }
+        assignedAt: { type: string, format: date-time }
+        endedAt: { type: string, format: date-time, nullable: true }
+        expectedCompletionAt: { type: string, format: date-time, nullable: true }
+        isCurrent: { type: boolean }
+        note: { type: string, nullable: true }
+
+    RequestProgress:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        requestId: { type: integer, format: int64 }
+        updatedBy: { $ref: "#/components/schemas/UserRef" }
+        progressContent: { type: string }
+        resultContent: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
+
+    RequestComment:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        requestId: { type: integer, format: int64 }
+        user: { $ref: "#/components/schemas/UserRef" }
+        content: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time, nullable: true }
+
+    RequestAttachment:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        requestId: { type: integer, format: int64 }
+        uploadedBy: { $ref: "#/components/schemas/UserRef" }
+        contextType: { type: string, enum: [REQUEST, PROGRESS, COMMENT, FEEDBACK] }
+        relatedRecordId: { type: integer, format: int64, nullable: true }
+        originalFileName: { type: string }
+        fileUrl: { type: string }
+        contentType: { type: string, nullable: true }
+        fileSize: { type: integer, format: int64, nullable: true }
+        createdAt: { type: string, format: date-time }
+
+    RequestHistory:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        requestId: { type: integer, format: int64 }
+        actionCode: { type: string }
+        fromStatus: { $ref: "#/components/schemas/RequestStatus" }
+        toStatus: { $ref: "#/components/schemas/RequestStatus" }
+        performedBy:
+          type: object
+          allOf: [{ $ref: "#/components/schemas/UserRef" }]
+          nullable: true
+          description: NULL nếu hệ thống tự thực hiện
+        description: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
+
+    # ---------- Dashboard / Reports ----------
+    DashboardSummary:
+      type: object
+      properties:
+        totalOpen: { type: integer }
+        totalOverdue: { type: integer }
+        totalCompletedThisMonth: { type: integer }
+        byStatus:
+          type: array
+          items:
+            type: object
+            properties:
+              statusCode: { type: string }
+              count: { type: integer }
+        byCategory:
+          type: array
+          items:
+            type: object
+            properties:
+              categoryName: { type: string }
+              count: { type: integer }
+        byDepartment:
+          type: array
+          items:
+            type: object
+            properties:
+              departmentName: { type: string }
+              count: { type: integer }
+
+    ReportResult:
+      type: object
+      properties:
+        fromDate: { type: string, format: date }
+        toDate: { type: string, format: date }
+        groupBy: { type: string }
+        totalRequests: { type: integer }
+        totalCompleted: { type: integer }
+        avgResolutionHours: { type: number, format: float, nullable: true }
+        groups:
+          type: array
+          items:
+            type: object
+            properties:
+              key: { type: string }
+              count: { type: integer }
