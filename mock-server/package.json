@@ -1,0 +1,18 @@
+{
+  "name": "itsupport-mock-server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Mock API server cho IT Support Request Management System - implement dung docs/api-spec.yaml de FE build truoc khi backend ASP.NET xong.",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.3.0"
+  }
+}
