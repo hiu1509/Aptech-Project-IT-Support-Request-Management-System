@@ -1,0 +1,8 @@
+﻿IF NOT EXISTS (SELECT * FROM sys.databases WHERE name = 'ITSupportDB')
+BEGIN
+    CREATE DATABASE ITSupportDB;
+END
+GO
+
+USE ITSupportDB;
+GO

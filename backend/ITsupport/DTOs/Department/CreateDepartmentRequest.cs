@@ -1,0 +1,20 @@
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace ITsupport.DTOs.Department
+{
+    public class CreateDepartmentRequest
+    {
+        [Required(ErrorMessage = "Mã phòng ban không được để trống")]
+        [MaxLength(50)]
+        public string Code { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Tên phòng ban không được để trống")]
+        [MaxLength(150)]
+        public string Name { get; set; } = string.Empty;
+
+        [MaxLength(500)]
+        public string? Description { get; set; }
+
+        public bool IsActive { get; set; } = true;
+    }
+}
