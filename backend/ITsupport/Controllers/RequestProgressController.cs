@@ -27,7 +27,7 @@ namespace ITsupport.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin,Leader,Coordinator,ITStaff")]
+        [Authorize(Roles = "ITStaff")]
         public async Task<IActionResult> AddProgress([FromBody] CreateProgressRequest request)
         {
             var currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);

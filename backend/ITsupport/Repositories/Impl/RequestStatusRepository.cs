@@ -47,6 +47,16 @@ namespace ITsupport.Repositories.Impl
             return await _context.RequestStatuses.FirstOrDefaultAsync(s => s.Id == id);
         }
 
+        public async Task<RequestStatus?> GetByCodeAsync(string code)
+        {
+            var normalizedCode = code.Trim().ToUpperInvariant();
+
+            return await _context.RequestStatuses
+                .FirstOrDefaultAsync(
+                    s => s.Code.ToUpper() == normalizedCode
+                );
+        }
+
         public async Task<bool> ExistsByCodeAsync(string code)
         {
             return await _context.RequestStatuses.AnyAsync(s => s.Code == code);

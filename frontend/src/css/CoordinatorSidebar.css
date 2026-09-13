@@ -1,0 +1,226 @@
+.coordinator-sidebar {
+    width: 250px;
+    min-width: 250px;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 22px 16px 16px;
+    background: linear-gradient( 180deg, #174f86 0%, #21639b 100% );
+    color: #ffffff;
+    overflow-y: auto;
+}
+
+
+/* BRAND */
+
+.coordinator-sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    padding: 0 10px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.coordinator-sidebar-logo {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #174f86;
+    font-size: 17px;
+    font-weight: 800;
+}
+
+.coordinator-sidebar-brand-name {
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.coordinator-sidebar-brand-subtitle {
+    margin-top: 4px;
+    color: rgba(255, 255, 255, 0.62);
+    font-size: 11px;
+}
+
+
+/* MENU */
+
+.coordinator-sidebar-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 22px;
+}
+
+.coordinator-sidebar-section-title {
+    margin: 0 14px 8px;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+}
+
+.coordinator-account-title {
+    margin-top: 22px;
+}
+
+.coordinator-sidebar-menu a,
+.coordinator-sidebar-menu a:hover,
+.coordinator-sidebar-menu a:focus,
+.coordinator-sidebar-menu a:active,
+.coordinator-sidebar-menu a:visited {
+    text-decoration: none;
+}
+
+.coordinator-sidebar-item {
+    width: 100%;
+    height: 46px;
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    padding: 0 14px;
+    border-radius: 9px;
+    color: rgba(255, 255, 255, 0.76);
+    font-size: 13px;
+    font-weight: 500;
+    transition: background-color 0.18s ease, color 0.18s ease;
+}
+
+    .coordinator-sidebar-item svg {
+        width: 19px;
+        height: 19px;
+        flex-shrink: 0;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.7;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+    .coordinator-sidebar-item:hover {
+        background: rgba(255, 255, 255, 0.07);
+        color: #ffffff;
+    }
+
+    .coordinator-sidebar-item.active {
+        background: #ffffff;
+        color: #18558e;
+        font-weight: 700;
+        box-shadow: 0 5px 16px rgba(4, 30, 58, 0.12);
+    }
+
+
+/* ACCOUNT */
+
+.coordinator-sidebar-account {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 8px 2px;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.coordinator-sidebar-avatar {
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.13);
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.coordinator-sidebar-user {
+    flex: 1;
+    min-width: 0;
+}
+
+.coordinator-sidebar-user-name {
+    overflow: hidden;
+    color: rgba(255, 255, 255, 0.96);
+    font-size: 12px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.coordinator-sidebar-user-role {
+    margin-top: 3px;
+    overflow: hidden;
+    color: rgba(255, 255, 255, 0.52);
+    font-size: 10px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+
+/* LOGOUT */
+
+.coordinator-sidebar-logout {
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    transition: background-color 0.18s ease, color 0.18s ease;
+}
+
+    .coordinator-sidebar-logout:hover {
+        background: rgba(255, 255, 255, 0.09);
+        color: #ffffff;
+    }
+
+    .coordinator-sidebar-logout svg {
+        width: 18px;
+        height: 18px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+
+/* MOBILE */
+
+@media (max-width: 768px) {
+    .coordinator-sidebar {
+        width: 100%;
+        min-width: 100%;
+        height: auto;
+        position: relative;
+        padding: 14px;
+    }
+
+    .coordinator-sidebar-menu {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6px;
+    }
+
+    .coordinator-sidebar-section-title {
+        grid-column: 1 / -1;
+    }
+
+    .coordinator-sidebar-account {
+        margin-top: 14px;
+    }
+}

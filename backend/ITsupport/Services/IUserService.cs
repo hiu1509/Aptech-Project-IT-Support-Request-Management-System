@@ -10,5 +10,12 @@ namespace ITsupport.Services
         Task<ApiResult<UserResponse>> CreateAsync(CreateUserRequest request);
         Task<ApiResult<UserResponse>> UpdateAsync(int id, UpdateUserRequest request);
         Task<ApiResult<UserResponse>> DeleteAsync(int id);
+
+        Task<ApiResult<List<UserRoleResponse>>> GetRolesAsync(int userId);
+
+        Task<ApiResult<List<UserRoleResponse>>> UpdateRolesAsync(
+            int userId,
+            UpdateUserRolesRequest request,
+            int? assignedByUserId);
     }
 }

@@ -1,0 +1,273 @@
+/* =========================================================
+   PAGE
+   ========================================================= */
+
+.leader-dashboard-layout {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    background: linear-gradient( 180deg, #f7f9fc 0%, #f3f6fa 100% );
+}
+
+.leader-dashboard-main {
+    flex: 1;
+    min-width: 0;
+    min-height: 100vh;
+}
+
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.leader-dashboard-header {
+    min-height: 118px;
+    display: flex;
+    align-items: center;
+    padding: 28px 36px;
+    background: rgba(255, 255, 255, 0.96);
+    border-bottom: 1px solid #e6eaf0;
+}
+
+    .leader-dashboard-header h1 {
+        margin: 0;
+        color: #111827;
+        font-size: 27px;
+        font-weight: 750;
+        letter-spacing: -0.5px;
+        line-height: 1.2;
+    }
+
+    .leader-dashboard-header p {
+        margin: 8px 0 0;
+        color: #667085;
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+    .leader-dashboard-header strong {
+        color: #344054;
+    }
+
+
+/* =========================================================
+   CONTENT
+   ========================================================= */
+
+.leader-dashboard-content {
+    padding: 28px 36px 40px;
+}
+
+
+/* =========================================================
+   WELCOME CARD
+   ========================================================= */
+
+.leader-dashboard-welcome-card {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 18px;
+    padding: 22px;
+    border: 1px solid #e3e8ef;
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.02), 0 8px 24px rgba(16, 24, 40, 0.035);
+}
+
+.leader-dashboard-welcome-icon {
+    width: 46px;
+    height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+    .leader-dashboard-welcome-icon svg {
+        width: 22px;
+        height: 22px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+.leader-dashboard-welcome-card h2 {
+    margin: 0;
+    color: #273142;
+    font-size: 16px;
+    font-weight: 750;
+}
+
+.leader-dashboard-welcome-card p {
+    margin: 6px 0 0;
+    color: #667085;
+    font-size: 11.5px;
+    line-height: 1.7;
+}
+
+.leader-dashboard-welcome-card button {
+    min-height: 38px;
+    padding: 0 15px;
+    border: 1px solid #2563eb;
+    border-radius: 8px;
+    background: #2563eb;
+    color: #ffffff;
+    font-size: 10.5px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+    .leader-dashboard-welcome-card button:hover {
+        background: #1d4ed8;
+        border-color: #1d4ed8;
+    }
+
+
+/* =========================================================
+   INFO GRID
+   ========================================================= */
+
+.leader-dashboard-info-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+    margin-top: 18px;
+}
+
+.leader-dashboard-info-card {
+    padding: 20px;
+    border: 1px solid #e3e8ef;
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.02);
+}
+
+.leader-dashboard-info-label {
+    color: #667085;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.45px;
+}
+
+.leader-dashboard-info-value {
+    margin-top: 7px;
+    color: #101828;
+    font-size: 17px;
+    font-weight: 750;
+}
+
+.leader-dashboard-info-card p {
+    margin: 8px 0 0;
+    color: #667085;
+    font-size: 10.5px;
+    line-height: 1.6;
+}
+
+
+/* =========================================================
+   TEAM CARD
+   ========================================================= */
+
+.leader-dashboard-team-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    margin-top: 18px;
+    padding: 20px;
+    border: 1px solid #e3e8ef;
+    border-radius: 14px;
+    background: #ffffff;
+}
+
+    .leader-dashboard-team-card h2 {
+        margin: 0;
+        color: #273142;
+        font-size: 15px;
+        font-weight: 750;
+    }
+
+    .leader-dashboard-team-card p {
+        margin: 6px 0 0;
+        color: #667085;
+        font-size: 10.5px;
+        line-height: 1.6;
+    }
+
+    .leader-dashboard-team-card button {
+        min-height: 36px;
+        padding: 0 14px;
+        border: 1px solid #d0d5dd;
+        border-radius: 8px;
+        background: #ffffff;
+        color: #344054;
+        font-size: 10.5px;
+        font-weight: 650;
+        cursor: pointer;
+    }
+
+        .leader-dashboard-team-card button:hover {
+            background: #f8fafc;
+        }
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1100px) {
+
+    .leader-dashboard-header,
+    .leader-dashboard-content {
+        padding-left: 24px;
+        padding-right: 24px;
+    }
+
+    .leader-dashboard-info-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+@media (max-width: 768px) {
+
+    .leader-dashboard-layout {
+        flex-direction: column;
+    }
+
+    .leader-dashboard-header {
+        min-height: auto;
+        padding: 20px 16px;
+    }
+
+        .leader-dashboard-header h1 {
+            font-size: 23px;
+        }
+
+    .leader-dashboard-content {
+        padding: 18px 16px 28px;
+    }
+
+    .leader-dashboard-welcome-card {
+        grid-template-columns: 1fr;
+    }
+
+        .leader-dashboard-welcome-card button {
+            width: 100%;
+        }
+
+    .leader-dashboard-team-card {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+        .leader-dashboard-team-card button {
+            width: 100%;
+        }
+}

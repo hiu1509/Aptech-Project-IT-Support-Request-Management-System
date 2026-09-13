@@ -11,23 +11,56 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-
+using Microsoft.OpenApi;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-//Controllers
+// =========================================================
+// Controllers
+// =========================================================
+
 builder.Services.AddControllers();
 
-//DbContext 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? throw new InvalidOperationException("Please make sure the connection string is set in appsettings.json");
+
+// =========================================================
+// CORS
+// Cho phép frontend Vite gọi API backend
+// Frontend: http://localhost:5173
+// =========================================================
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Frontend", policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:5173")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
+
+// =========================================================
+// DbContext
+// =========================================================
+
+var connectionString =
+    builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException(
+        "Please make sure the connection string is set in appsettings.json"
+    );
+
 builder.Services.AddDbContext<ITsupportDbContext>(options =>
 {
     options.UseSqlServer(connectionString);
 });
 
-//Đăng ký Repositories
+
+// =========================================================
+// Repositories
+// =========================================================
+
 builder.Services.AddScoped<IDepartmentRepository, DepartmentRepository>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IITGroupRepository, ITGroupRepository>();
@@ -46,7 +79,11 @@ builder.Services.AddScoped<IRequestAttachmentRepository, RequestAttachmentReposi
 builder.Services.AddScoped<IRequestHistoryRepository, RequestHistoryRepository>();
 builder.Services.AddScoped<IEmailNotificationRepository, EmailNotificationRepository>();
 
-//Đăng ký Services
+
+// =========================================================
+// Services
+// =========================================================
+
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IDepartmentService, DepartmentService>();
@@ -68,39 +105,87 @@ builder.Services.AddScoped<IRequestHistoryService, RequestHistoryService>();
 builder.Services.AddScoped<IEmailNotificationService, EmailNotificationService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 
-//Authentication
+
+// =========================================================
+// Authentication
+// =========================================================
+
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
-        };
+        options.TokenValidationParameters =
+            new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+
+                ValidIssuer =
+                    builder.Configuration["Jwt:Issuer"],
+
+                ValidAudience =
+                    builder.Configuration["Jwt:Audience"],
+
+                IssuerSigningKey =
+                    new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(
+                            builder.Configuration["Jwt:Key"]!
+                        )
+                    )
+            };
     });
+
 builder.Services.AddAuthorization();
 
-//Swagger Services
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 
-//File Storage Provider
-var storageProvider = builder.Configuration["FileStorage:Provider"];
+// =========================================================
+// Swagger
+// =========================================================
+
+builder.Services.AddEndpointsApiExplorer();
+
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition(
+        "Bearer",
+        new OpenApiSecurityScheme
+        {
+            Type = SecuritySchemeType.Http,
+            Scheme = "bearer",
+            BearerFormat = "JWT",
+            Description = "Enter JWT token"
+        }
+    );
+});
+
+
+// =========================================================
+// File Storage Provider
+// =========================================================
+
+var storageProvider =
+    builder.Configuration["FileStorage:Provider"];
+
 switch (storageProvider)
 {
     default:
-        builder.Services.AddScoped<IFileStorageProvider, LocalStorageProvider>();
+        builder.Services.AddScoped<
+            IFileStorageProvider,
+            LocalStorageProvider
+        >();
+
         break;
 }
 
+
+// =========================================================
 // AutoMapper
+// =========================================================
+
 builder.Services.AddAutoMapper(
     typeof(DepartmentProfile),
     typeof(EmailNotificationProfile),
@@ -121,28 +206,66 @@ builder.Services.AddAutoMapper(
     typeof(UserRoleProfile)
 );
 
+
+// =========================================================
+// Build App
+// =========================================================
+
 var app = builder.Build();
 
-//Swagger UI
+
+// =========================================================
+// Swagger UI
+// =========================================================
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
-app.UseStaticFiles(); 
 
-app.UseAuthentication(); 
+// =========================================================
+// Middleware
+// =========================================================
+
+app.UseHttpsRedirection();
+
+app.UseStaticFiles();
+
+
+// CORS phải chạy trước Authentication / Authorization
+app.UseCors("Frontend");
+
+
+app.UseAuthentication();
+
 app.UseAuthorization();
+
+
+// =========================================================
+// Map Controllers
+// =========================================================
 
 app.MapControllers();
 
 
+// =========================================================
+// Ensure Database Exists
+// =========================================================
+
 using (var scope = app.Services.CreateScope())
 {
-    var dbContext = scope.ServiceProvider.GetRequiredService<ITsupportDbContext>();
+    var dbContext =
+        scope.ServiceProvider
+            .GetRequiredService<ITsupportDbContext>();
+
     dbContext.Database.EnsureCreated();
 }
+
+
+// =========================================================
+// Run
+// =========================================================
 
 app.Run();

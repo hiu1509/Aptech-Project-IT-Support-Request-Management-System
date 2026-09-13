@@ -18,7 +18,9 @@ namespace ITsupport.Entities
         public string Name { get; set; } = string.Empty;
 
         public byte Level { get; set; }
+
         public int? TargetResolutionHours { get; set; }
+
         public bool IsActive { get; set; } = true;
     }
 }

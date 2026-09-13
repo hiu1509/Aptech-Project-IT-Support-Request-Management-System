@@ -1,0 +1,451 @@
+.permissions-container,
+.permission-detail-container {
+    padding: 28px 32px 40px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.permissions-header,
+.permission-detail-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+}
+
+    .permissions-header h1,
+    .permission-detail-header h1 {
+        margin: 0 0 6px;
+        font-size: 26px;
+        font-weight: 700;
+        color: #172033;
+    }
+
+    .permissions-header p,
+    .permission-detail-header p {
+        margin: 0;
+        font-size: 14px;
+        color: #687386;
+    }
+
+.permissions-alert {
+    margin-bottom: 18px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.permissions-alert-error {
+    background: #fff1f0;
+    border: 1px solid #ffc9c5;
+    color: #b42318;
+}
+
+.permissions-alert-success {
+    background: #edfdf3;
+    border: 1px solid #b7ebc6;
+    color: #16794a;
+}
+
+.permissions-toolbar {
+    display: grid;
+    grid-template-columns: minmax(280px, 1fr) 220px;
+    gap: 18px;
+    align-items: end;
+    margin-bottom: 18px;
+}
+
+.permissions-search,
+.permissions-filter {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+    .permissions-search label,
+    .permissions-filter label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #445067;
+    }
+
+    .permissions-search input,
+    .permissions-filter select {
+        height: 42px;
+        padding: 0 12px;
+        border: 1px solid #d8dee8;
+        border-radius: 8px;
+        background: #fff;
+        color: #172033;
+        font-size: 14px;
+        outline: none;
+    }
+
+        .permissions-search input:focus,
+        .permissions-filter select:focus {
+            border-color: #7b8ba7;
+        }
+
+.permissions-summary {
+    margin-bottom: 12px;
+    font-size: 13px;
+    color: #687386;
+}
+
+.permissions-table-card {
+    overflow: hidden;
+    border: 1px solid #e4e8ef;
+    border-radius: 10px;
+    background: #fff;
+}
+
+.permissions-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.permissions-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+    .permissions-table th {
+        padding: 13px 16px;
+        background: #f7f9fc;
+        border-bottom: 1px solid #e4e8ef;
+        text-align: left;
+        font-size: 12px;
+        font-weight: 700;
+        color: #5b667a;
+        white-space: nowrap;
+    }
+
+    .permissions-table td {
+        padding: 14px 16px;
+        border-bottom: 1px solid #eef1f5;
+        font-size: 14px;
+        color: #303b4f;
+    }
+
+    .permissions-table tbody tr:last-child td {
+        border-bottom: 0;
+    }
+
+    .permissions-table tbody tr:hover {
+        background: #fafbfd;
+    }
+
+.permission-user-cell {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+}
+
+.permission-avatar,
+.permission-profile-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    background: #edf1f7;
+    color: #34415a;
+    font-weight: 700;
+}
+
+.permission-avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
+}
+
+.permission-profile-avatar {
+    width: 58px;
+    height: 58px;
+    font-size: 21px;
+}
+
+.permission-user-name {
+    font-weight: 600;
+    color: #1b2538;
+}
+
+.permission-user-code {
+    margin-top: 3px;
+    font-size: 12px;
+    color: #8791a3;
+}
+
+.permission-role-badge {
+    display: inline-flex;
+    padding: 5px 9px;
+    border-radius: 999px;
+    background: #edf2fb;
+    color: #35537b;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.permission-role-empty {
+    color: #9ba4b3;
+    font-size: 13px;
+}
+
+.permission-status {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 9px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+    .permission-status.active {
+        background: #edf9f1;
+        color: #24734b;
+    }
+
+    .permission-status.inactive {
+        background: #f3f4f6;
+        color: #737b88;
+    }
+
+.permissions-action-column {
+    text-align: right !important;
+}
+
+.permissions-manage-button {
+    border: 1px solid #cfd6e2;
+    border-radius: 7px;
+    background: #fff;
+    padding: 7px 12px;
+    color: #2e3f59;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+    .permissions-manage-button:hover {
+        background: #f5f7fa;
+    }
+
+.permissions-state {
+    padding: 40px 20px;
+    text-align: center;
+    color: #788397;
+}
+
+.permissions-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 14px;
+    margin-top: 18px;
+    font-size: 13px;
+    color: #657086;
+}
+
+    .permissions-pagination button {
+        min-width: 82px;
+        height: 36px;
+        border: 1px solid #d7dde7;
+        border-radius: 7px;
+        background: #fff;
+        cursor: pointer;
+    }
+
+        .permissions-pagination button:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+
+/* =========================================================
+   USER PERMISSIONS DETAIL
+   ========================================================= */
+
+.permission-back-button {
+    margin-bottom: 18px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #56667e;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.permission-user-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+    border: 1px solid #e2e7ef;
+    border-radius: 10px;
+    background: #fff;
+    margin-bottom: 22px;
+}
+
+    .permission-user-card h2 {
+        margin: 0 0 4px;
+        font-size: 18px;
+        color: #1d2738;
+    }
+
+    .permission-user-card p {
+        margin: 0;
+        color: #6f7a8d;
+        font-size: 14px;
+    }
+
+.permission-user-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 9px;
+    font-size: 12px;
+    color: #788397;
+}
+
+.permission-current-user {
+    display: inline-flex;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: #eef2f7;
+    color: #4c5a70;
+    font-weight: 600;
+}
+
+.permission-role-section {
+    padding: 22px;
+    border: 1px solid #e2e7ef;
+    border-radius: 10px;
+    background: #fff;
+}
+
+.permission-section-title {
+    margin-bottom: 18px;
+}
+
+    .permission-section-title h2 {
+        margin: 0 0 5px;
+        font-size: 18px;
+        color: #1f293a;
+    }
+
+    .permission-section-title p {
+        margin: 0;
+        color: #758095;
+        font-size: 13px;
+    }
+
+.permission-role-grid {
+    display: grid;
+    grid-template-columns: repeat( 2, minmax(0, 1fr) );
+    gap: 12px;
+}
+
+.permission-role-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    border: 1px solid #dfe4ec;
+    border-radius: 9px;
+    background: #fff;
+    cursor: pointer;
+    transition: 0.15s ease;
+}
+
+    .permission-role-card:hover {
+        border-color: #bfc9d8;
+        background: #fafbfd;
+    }
+
+    .permission-role-card.selected {
+        border-color: #91a5c0;
+        background: #f4f7fb;
+    }
+
+    .permission-role-card input {
+        margin-top: 4px;
+    }
+
+.permission-role-card-content {
+    min-width: 0;
+    flex: 1;
+}
+
+.permission-role-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.permission-role-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #263247;
+}
+
+.permission-role-code {
+    padding: 3px 7px;
+    border-radius: 5px;
+    background: #eef1f5;
+    color: #637087;
+    font-size: 11px;
+}
+
+.permission-role-card p {
+    margin: 7px 0 0;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #788397;
+}
+
+.permission-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.permission-cancel-button,
+.permission-save-button {
+    min-width: 120px;
+    height: 40px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.permission-cancel-button {
+    border: 1px solid #d2d8e1;
+    background: #fff;
+    color: #4a566b;
+}
+
+.permission-save-button {
+    border: 1px solid #273b58;
+    background: #273b58;
+    color: #fff;
+}
+
+    .permission-save-button:disabled,
+    .permission-cancel-button:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+    }
+
+@media (max-width: 900px) {
+    .permissions-toolbar,
+    .permission-role-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .permissions-container,
+    .permission-detail-container {
+        padding: 20px;
+    }
+}

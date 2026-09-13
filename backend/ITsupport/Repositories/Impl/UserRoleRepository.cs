@@ -39,6 +39,12 @@ namespace ITsupport.Repositories.Impl
                 .AnyAsync(ur => ur.UserId == userId && ur.RoleId == roleId);
         }
 
+        public async Task<bool> RoleExistsAsync(int roleId)
+        {
+            return await _context.Roles
+                .AnyAsync(r => r.Id == roleId);
+        }
+
         public async Task AddAsync(UserRole userRole)
         {
             await _context.UserRoles.AddAsync(userRole);

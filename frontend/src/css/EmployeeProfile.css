@@ -1,0 +1,667 @@
+.employee-profile-layout {
+    display: flex;
+    width: 100%;
+    min-height: 100vh;
+    background: #f4f7fb;
+}
+
+
+.employee-profile-main {
+    flex: 1;
+    min-width: 0;
+    min-height: 100vh;
+}
+
+
+.employee-profile-header {
+    display: flex;
+    min-height: 112px;
+    box-sizing: border-box;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 24px 38px;
+    border-bottom: 1px solid #dfe6ef;
+    background: #ffffff;
+}
+
+
+    .employee-profile-header h1 {
+        margin: 0;
+        color: #101c30;
+        font-size: 27px;
+        font-weight: 700;
+    }
+
+
+    .employee-profile-header p {
+        margin: 7px 0 0;
+        color: #74839a;
+        font-size: 14px;
+    }
+
+
+.employee-profile-refresh {
+    height: 42px;
+    padding: 0 18px;
+    border: 1px solid #cfd9e7;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #334761;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+
+    .employee-profile-refresh:hover {
+        background: #f8fafc;
+    }
+
+
+    .employee-profile-refresh:disabled {
+        cursor: not-allowed;
+        opacity: 0.65;
+    }
+
+
+.employee-profile-content {
+    padding: 32px 38px 44px;
+}
+
+
+.employee-profile-alert {
+    margin-bottom: 20px;
+    padding: 14px 16px;
+    border-radius: 9px;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+
+    .employee-profile-alert.error {
+        border: 1px solid #fecaca;
+        background: #fef2f2;
+        color: #991b1b;
+    }
+
+
+    .employee-profile-alert.success {
+        border: 1px solid #bbf7d0;
+        background: #f0fdf4;
+        color: #166534;
+    }
+
+
+.employee-profile-card {
+    border: 1px solid #dfe7f0;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 2px 8px rgba(25, 48, 82, 0.04);
+}
+
+
+.employee-profile-summary {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    margin-bottom: 22px;
+    padding: 24px 26px;
+}
+
+
+.employee-profile-avatar {
+    display: flex;
+    width: 76px;
+    height: 76px;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: 18px;
+    background: #e7f0fb;
+    color: #185b9d;
+    font-size: 25px;
+    font-weight: 700;
+}
+
+
+.employee-profile-summary-info h2 {
+    margin: 0;
+    color: #172a46;
+    font-size: 22px;
+}
+
+
+.employee-profile-summary-info p {
+    margin: 6px 0 12px;
+    color: #7b899d;
+    font-size: 13px;
+}
+
+
+.employee-profile-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+
+.employee-profile-role-badge,
+.employee-profile-status {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 10px;
+    border-radius: 16px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+
+.employee-profile-role-badge {
+    background: #edf4fb;
+    color: #2865a2;
+}
+
+
+.employee-profile-status.active {
+    background: #eaf8ef;
+    color: #16803f;
+}
+
+
+.employee-profile-status.inactive {
+    background: #f4f4f5;
+    color: #6b7280;
+}
+
+
+.employee-profile-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px;
+    margin-bottom: 22px;
+}
+
+
+.employee-profile-card-heading {
+    padding: 19px 22px;
+    border-bottom: 1px solid #e7edf3;
+}
+
+
+    .employee-profile-card-heading h3 {
+        margin: 0;
+        color: #1c304e;
+        font-size: 16px;
+    }
+
+
+    .employee-profile-card-heading p {
+        margin: 5px 0 0;
+        color: #8794a7;
+        font-size: 12px;
+    }
+
+
+.employee-profile-details {
+    padding: 6px 22px;
+}
+
+
+.employee-profile-item {
+    display: flex;
+    min-height: 59px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    border-bottom: 1px solid #edf1f5;
+}
+
+
+    .employee-profile-item:last-child {
+        border-bottom: 0;
+    }
+
+
+    .employee-profile-item span {
+        color: #7c899c;
+        font-size: 12px;
+    }
+
+
+    .employee-profile-item strong {
+        color: #31435d;
+        font-size: 13px;
+        font-weight: 600;
+        text-align: right;
+    }
+
+
+.employee-profile-security {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 21px 24px;
+}
+
+
+    .employee-profile-security h3 {
+        margin: 0;
+        color: #1c304e;
+        font-size: 15px;
+    }
+
+
+    .employee-profile-security p {
+        max-width: 720px;
+        margin: 6px 0 0;
+        color: #7e8b9f;
+        font-size: 12px;
+        line-height: 1.6;
+    }
+
+
+/* =========================================================
+   CHANGE PASSWORD BUTTON
+   ========================================================= */
+
+.employee-profile-change-password {
+    flex-shrink: 0;
+    min-width: 145px;
+    height: 42px;
+    padding: 0 18px;
+    border: 1px solid #1765ad;
+    border-radius: 8px;
+    background: #1765ad;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+
+    .employee-profile-change-password:hover {
+        border-color: #12558f;
+        background: #12558f;
+    }
+
+
+    .employee-profile-change-password:active {
+        transform: translateY(1px);
+    }
+
+
+/* =========================================================
+   LOADING
+   ========================================================= */
+
+.employee-profile-loading {
+    display: flex;
+    min-height: 300px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: #718198;
+}
+
+
+.employee-profile-spinner {
+    width: 30px;
+    height: 30px;
+    border: 3px solid #e3e9f0;
+    border-top-color: #2166a8;
+    border-radius: 50%;
+    animation: employee-profile-spin 0.8s linear infinite;
+}
+
+
+@keyframes employee-profile-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+/* =========================================================
+   CHANGE PASSWORD MODAL
+   ========================================================= */
+
+.employee-profile-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    padding: 24px;
+    background: rgba(12, 28, 49, 0.55);
+    backdrop-filter: blur(2px);
+}
+
+
+.employee-profile-modal {
+    width: 100%;
+    max-width: 520px;
+    overflow: hidden;
+    border: 1px solid #dfe7f0;
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow: 0 25px 60px rgba(15, 35, 65, 0.22);
+    animation: employee-profile-modal-open 0.18s ease-out;
+}
+
+
+@keyframes employee-profile-modal-open {
+    from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.985);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+
+.employee-profile-modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 22px 24px;
+    border-bottom: 1px solid #e5ebf2;
+    background: #ffffff;
+}
+
+
+    .employee-profile-modal-header h3 {
+        margin: 0;
+        color: #172a46;
+        font-size: 18px;
+        font-weight: 700;
+    }
+
+
+    .employee-profile-modal-header p {
+        margin: 6px 0 0;
+        color: #7c899d;
+        font-size: 12px;
+        line-height: 1.5;
+    }
+
+
+.employee-profile-modal-close {
+    display: flex;
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 1px solid #dce4ed;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #65758b;
+    font-size: 21px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+
+    .employee-profile-modal-close:hover {
+        border-color: #ccd7e4;
+        background: #f6f8fb;
+        color: #273b58;
+    }
+
+
+    .employee-profile-modal-close:disabled {
+        cursor: not-allowed;
+        opacity: 0.55;
+    }
+
+
+.employee-profile-modal-body {
+    padding: 24px;
+}
+
+
+    .employee-profile-modal-body .employee-profile-alert {
+        margin-bottom: 18px;
+    }
+
+
+/* =========================================================
+   PASSWORD FIELD
+   ========================================================= */
+
+.employee-profile-password-field {
+    margin-bottom: 18px;
+}
+
+
+    .employee-profile-password-field:last-child {
+        margin-bottom: 0;
+    }
+
+
+    .employee-profile-password-field label {
+        display: block;
+        margin-bottom: 7px;
+        color: #334761;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+
+.employee-profile-password-input {
+    display: flex;
+    align-items: stretch;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    border: 1px solid #d5deea;
+    border-radius: 8px;
+    background: #ffffff;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+
+    .employee-profile-password-input:focus-within {
+        border-color: #4e8bc5;
+        box-shadow: 0 0 0 3px rgba(45, 112, 178, 0.08);
+    }
+
+
+    .employee-profile-password-input input {
+        flex: 1;
+        min-width: 0;
+        height: 43px;
+        box-sizing: border-box;
+        padding: 0 12px;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        color: #263b58;
+        font-family: inherit;
+        font-size: 13px;
+    }
+
+
+        .employee-profile-password-input input::placeholder {
+            color: #a0abba;
+        }
+
+
+    .employee-profile-password-input button {
+        min-width: 66px;
+        height: 43px;
+        padding: 0 12px;
+        border: 0;
+        border-left: 1px solid #e1e7ef;
+        background: #f8fafc;
+        color: #306ba8;
+        font-family: inherit;
+        font-size: 11px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+
+        .employee-profile-password-input button:hover {
+            background: #eef4fa;
+        }
+
+
+/* =========================================================
+   MODAL FOOTER
+   ========================================================= */
+
+.employee-profile-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 16px 24px;
+    border-top: 1px solid #e5ebf2;
+    background: #fafbfd;
+}
+
+
+.employee-profile-button {
+    min-width: 96px;
+    height: 40px;
+    padding: 0 16px;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+
+    .employee-profile-button.secondary {
+        border: 1px solid #d1dbe7;
+        background: #ffffff;
+        color: #43546d;
+    }
+
+
+        .employee-profile-button.secondary:hover {
+            background: #f6f8fb;
+        }
+
+
+    .employee-profile-button.primary {
+        border: 1px solid #1765ad;
+        background: #1765ad;
+        color: #ffffff;
+    }
+
+
+        .employee-profile-button.primary:hover {
+            border-color: #12558f;
+            background: #12558f;
+        }
+
+
+    .employee-profile-button:disabled {
+        cursor: not-allowed;
+        opacity: 0.65;
+    }
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 900px) {
+
+    .employee-profile-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+@media (max-width: 650px) {
+
+    .employee-profile-header {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 22px 18px;
+    }
+
+
+    .employee-profile-content {
+        padding: 22px 18px 32px;
+    }
+
+
+    .employee-profile-summary {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+
+    .employee-profile-item {
+        align-items: flex-start;
+        flex-direction: column;
+        justify-content: center;
+        gap: 5px;
+        padding: 12px 0;
+    }
+
+
+        .employee-profile-item strong {
+            text-align: left;
+        }
+
+
+    .employee-profile-security {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+
+    .employee-profile-change-password {
+        width: 100%;
+    }
+
+
+    .employee-profile-modal-overlay {
+        align-items: flex-start;
+        padding: 18px;
+        overflow-y: auto;
+    }
+
+
+    .employee-profile-modal {
+        margin: 30px 0;
+    }
+
+
+    .employee-profile-modal-header {
+        padding: 20px;
+    }
+
+
+    .employee-profile-modal-body {
+        padding: 20px;
+    }
+
+
+    .employee-profile-modal-footer {
+        padding: 14px 20px;
+    }
+
+
+    .employee-profile-button {
+        flex: 1;
+    }
+}

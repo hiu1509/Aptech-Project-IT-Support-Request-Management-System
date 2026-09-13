@@ -1,0 +1,352 @@
+.requests-layout {
+    min-height: 100vh;
+    display: flex;
+    background: #f5f7fb;
+}
+
+.requests-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.requests-content {
+    padding: 28px 30px;
+}
+
+.requests-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+}
+
+    .requests-heading h2 {
+        margin: 0;
+        font-size: 24px;
+        color: #172033;
+    }
+
+    .requests-heading p {
+        margin: 6px 0 0;
+        font-size: 13px;
+        color: #667085;
+    }
+
+.new-request-button {
+    height: 42px;
+    padding: 0 18px;
+    border: none;
+    border-radius: 8px;
+    background: #2f6fed;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+    .new-request-button:hover {
+        background: #245ed0;
+    }
+
+.requests-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.request-search {
+    flex: 1;
+    height: 42px;
+    padding: 0 14px;
+    border: 1px solid #d8e0ea;
+    border-radius: 8px;
+    background: #ffffff;
+    outline: none;
+    font-size: 13px;
+}
+
+    .request-search:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+.request-filter {
+    height: 42px;
+    min-width: 160px;
+    padding: 0 12px;
+    border: 1px solid #d8e0ea;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #344054;
+    font-size: 13px;
+    outline: none;
+}
+
+.requests-table-card {
+    overflow: hidden;
+    background: #ffffff;
+    border: 1px solid #e5eaf1;
+    border-radius: 11px;
+}
+
+.requests-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+    .requests-table th,
+    .requests-table td {
+        padding: 15px 14px;
+        text-align: left;
+        border-bottom: 1px solid #edf0f4;
+        font-size: 12px;
+    }
+
+    .requests-table th {
+        background: #fafbfc;
+        color: #667085;
+        font-weight: 600;
+    }
+
+    .requests-table td {
+        color: #344054;
+    }
+
+    .requests-table tbody tr:hover {
+        background: #fafcff;
+    }
+
+.request-id {
+    color: #2563eb !important;
+    font-weight: 600;
+}
+
+.request-priority,
+.request-status {
+    display: inline-flex;
+    padding: 5px 9px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+    .request-priority.high {
+        background: #fff1f2;
+        color: #be123c;
+    }
+
+    .request-priority.medium {
+        background: #fff7ed;
+        color: #c2410c;
+    }
+
+    .request-priority.low {
+        background: #f0fdf4;
+        color: #15803d;
+    }
+
+    .request-status.new {
+        background: #eff6ff;
+        color: #2563eb;
+    }
+
+    .request-status.progress {
+        background: #fff7ed;
+        color: #c2410c;
+    }
+
+    .request-status.completed {
+        background: #f0fdf4;
+        color: #15803d;
+    }
+
+@media (max-width: 900px) {
+    .requests-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .request-filter {
+        width: 100%;
+    }
+
+    .requests-table-card {
+        overflow-x: auto;
+    }
+
+    .requests-table {
+        min-width: 850px;
+    }
+}
+
+.requests-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.requests-loading {
+    min-height: 220px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #667085;
+    font-size: 13px;
+}
+
+.requests-error {
+    margin-bottom: 18px;
+    padding: 12px 14px;
+    border: 1px solid #f5c2c0;
+    border-radius: 8px;
+    background: #fff5f5;
+    color: #b42318;
+    font-size: 12px;
+}
+
+.request-requester {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+    .request-requester strong {
+        color: #344054;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .request-requester span {
+        color: #98a2b3;
+        font-size: 10px;
+    }
+
+.request-id-button {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #2563eb;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+    .request-id-button:hover {
+        color: #1d4ed8;
+        text-decoration: underline;
+    }
+
+/* =========================================================
+   REQUESTS HEADER
+   ========================================================= */
+
+.requests-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.requests-refresh {
+    min-height: 38px;
+    padding: 0 14px;
+    border: 1px solid #d0d5dd;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #344054;
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+    .requests-refresh:hover:not(:disabled) {
+        background: #f8fafc;
+    }
+
+    .requests-refresh:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+
+/* =========================================================
+   TABLE SUMMARY
+   ========================================================= */
+
+.requests-table-summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 18px;
+    border-bottom: 1px solid #eaecf0;
+    color: #667085;
+    font-size: 10px;
+}
+
+    .requests-table-summary span + span::before {
+        content: "•";
+        margin-right: 8px;
+        color: #d0d5dd;
+    }
+
+
+/* =========================================================
+   TITLE
+   ========================================================= */
+
+.request-title-cell {
+    min-width: 210px;
+    max-width: 320px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   OPEN BUTTON
+   ========================================================= */
+
+.request-open-button {
+    min-height: 30px;
+    padding: 0 11px;
+    border: 1px solid #c7d7fe;
+    border-radius: 7px;
+    background: #eff6ff;
+    color: #175cd3;
+    font-size: 9.5px;
+    font-weight: 650;
+    cursor: pointer;
+}
+
+    .request-open-button:hover {
+        border-color: #84adff;
+        background: #dbeafe;
+    }
+
+
+/* =========================================================
+   REVIEW STATUS
+   ========================================================= */
+
+.request-status.review {
+    background: #fff4ed;
+    color: #c4320a;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 768px) {
+
+    .requests-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .requests-refresh {
+        width: 100%;
+    }
+}

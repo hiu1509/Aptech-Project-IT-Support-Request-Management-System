@@ -21,6 +21,8 @@ namespace ITsupport.DTOs.User
         public string Password { get; set; } = string.Empty;
 
         public int? DepartmentId { get; set; }
+        [Required(ErrorMessage = "Vai trò không được để trống")]
+        public int RoleId { get; set; }
         public bool IsActive { get; set; } = true;
     }
 }
