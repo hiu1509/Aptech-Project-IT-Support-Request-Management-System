@@ -49,6 +49,42 @@ namespace ITsupport.Data
                 .HasForeignKey(sr => sr.RequesterDepartmentId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<SupportRequest>()
+                .HasOne(sr => sr.Requester)
+                .WithMany()
+                .HasForeignKey(sr => sr.RequesterId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<SupportRequest>()
+                .HasOne(sr => sr.CurrentAssignee)
+                .WithMany()
+                .HasForeignKey(sr => sr.CurrentAssigneeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<SupportRequest>()
+                .HasOne(sr => sr.Category)
+                .WithMany()
+                .HasForeignKey(sr => sr.CategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<SupportRequest>()
+                .HasOne(sr => sr.Priority)
+                .WithMany()
+                .HasForeignKey(sr => sr.PriorityId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<SupportRequest>()
+                .HasOne(sr => sr.Status)
+                .WithMany()
+                .HasForeignKey(sr => sr.StatusId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<SupportRequest>()
+                .HasOne(sr => sr.CurrentITGroup)
+                .WithMany()
+                .HasForeignKey(sr => sr.CurrentITGroupId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             modelBuilder.Entity<RequestAssignment>()
                 .HasOne(ra => ra.AssignedByUser)
                 .WithMany()

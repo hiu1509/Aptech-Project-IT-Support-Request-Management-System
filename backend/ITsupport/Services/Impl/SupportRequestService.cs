@@ -177,6 +177,30 @@ namespace ITsupport.Services.Impl
 
 
         // =========================================================
+        // LOAD FRESH COPY WITH NAVIGATION PROPERTIES
+        //
+        // Sau khi mutate + SaveChangesAsync, entity dang tracked co the
+        // co navigation property cu/null (khong tu refresh theo FK vua
+        // doi). Doc lai ban moi kem Include truoc khi map sang response
+        // de RequesterName/StatusName/CategoryName/... khong bi null
+        // hoac hien thi sai.
+        // =========================================================
+
+        private async Task<SupportRequest?> LoadDetailedAsync(long id)
+        {
+            return await _context.SupportRequests
+                .AsNoTracking()
+                .Include(r => r.Requester)
+                .Include(r => r.Category)
+                .Include(r => r.Priority)
+                .Include(r => r.Status)
+                .Include(r => r.CurrentITGroup)
+                .Include(r => r.CurrentAssignee)
+                .FirstOrDefaultAsync(r => r.Id == id);
+        }
+
+
+        // =========================================================
         // GET ALL
         // =========================================================
 
@@ -232,6 +256,14 @@ namespace ITsupport.Services.Impl
             SupportRequestQueryParameters parameters
         )
         {
+            query = query
+                .Include(r => r.Requester)
+                .Include(r => r.Category)
+                .Include(r => r.Priority)
+                .Include(r => r.Status)
+                .Include(r => r.CurrentITGroup)
+                .Include(r => r.CurrentAssignee);
+
             // Search
             if (!string.IsNullOrWhiteSpace(parameters.Keyword))
             {
@@ -574,7 +606,7 @@ namespace ITsupport.Services.Impl
             return ApiResult<SupportRequestResponse>
                 .Success(
                     _mapper.Map<SupportRequestResponse>(
-                        entity
+                        await LoadDetailedAsync(entity.Id)
                     )
                 );
         }
@@ -767,7 +799,7 @@ namespace ITsupport.Services.Impl
             return ApiResult<SupportRequestResponse>
                 .Success(
                     _mapper.Map<SupportRequestResponse>(
-                        supportRequest
+                        await LoadDetailedAsync(supportRequest.Id)
                     )
                 );
         }
@@ -978,7 +1010,7 @@ namespace ITsupport.Services.Impl
             return ApiResult<SupportRequestResponse>
                 .Success(
                     _mapper.Map<SupportRequestResponse>(
-                        supportRequest
+                        await LoadDetailedAsync(supportRequest.Id)
                     )
                 );
         }
@@ -1174,7 +1206,7 @@ namespace ITsupport.Services.Impl
             return ApiResult<SupportRequestResponse>
                 .Success(
                     _mapper.Map<SupportRequestResponse>(
-                        supportRequest
+                        await LoadDetailedAsync(supportRequest.Id)
                     )
                 );
         }
@@ -1407,7 +1439,7 @@ namespace ITsupport.Services.Impl
             return ApiResult<SupportRequestResponse>
                 .Success(
                     _mapper.Map<SupportRequestResponse>(
-                        supportRequest
+                        await LoadDetailedAsync(supportRequest.Id)
                     )
                 );
         }
@@ -1624,7 +1656,7 @@ namespace ITsupport.Services.Impl
             return ApiResult<SupportRequestResponse>
                 .Success(
                     _mapper.Map<SupportRequestResponse>(
-                        supportRequest
+                        await LoadDetailedAsync(supportRequest.Id)
                     )
                 );
         }
@@ -1843,7 +1875,7 @@ namespace ITsupport.Services.Impl
             return ApiResult<SupportRequestResponse>
                 .Success(
                     _mapper.Map<SupportRequestResponse>(
-                        supportRequest
+                        await LoadDetailedAsync(supportRequest.Id)
                     )
                 );
         }
@@ -2033,7 +2065,7 @@ namespace ITsupport.Services.Impl
             return ApiResult<SupportRequestResponse>
                 .Success(
                     _mapper.Map<SupportRequestResponse>(
-                        supportRequest
+                        await LoadDetailedAsync(supportRequest.Id)
                     )
                 );
         }
@@ -2232,7 +2264,7 @@ namespace ITsupport.Services.Impl
             return ApiResult<SupportRequestResponse>
                 .Success(
                     _mapper.Map<SupportRequestResponse>(
-                        supportRequest
+                        await LoadDetailedAsync(supportRequest.Id)
                     )
                 );
         }
@@ -2439,7 +2471,7 @@ namespace ITsupport.Services.Impl
             return ApiResult<SupportRequestResponse>
                 .Success(
                     _mapper.Map<SupportRequestResponse>(
-                        supportRequest
+                        await LoadDetailedAsync(supportRequest.Id)
                     )
                 );
         }
@@ -2634,7 +2666,7 @@ namespace ITsupport.Services.Impl
             return ApiResult<SupportRequestResponse>
                 .Success(
                     _mapper.Map<SupportRequestResponse>(
-                        supportRequest
+                        await LoadDetailedAsync(supportRequest.Id)
                     )
                 );
         }
@@ -2846,7 +2878,7 @@ namespace ITsupport.Services.Impl
             return ApiResult<SupportRequestResponse>
                 .Success(
                     _mapper.Map<SupportRequestResponse>(
-                        supportRequest
+                        await LoadDetailedAsync(supportRequest.Id)
                     )
                 );
         }
@@ -2890,7 +2922,7 @@ namespace ITsupport.Services.Impl
             return ApiResult<SupportRequestResponse>
                 .Success(
                     _mapper.Map<SupportRequestResponse>(
-                        entity
+                        await LoadDetailedAsync(entity.Id)
                     )
                 );
         }

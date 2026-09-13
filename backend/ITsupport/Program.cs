@@ -261,6 +261,8 @@ using (var scope = app.Services.CreateScope())
             .GetRequiredService<ITsupportDbContext>();
 
     dbContext.Database.EnsureCreated();
+
+    await DbSeeder.SeedAsync(scope.ServiceProvider);
 }
 
 
