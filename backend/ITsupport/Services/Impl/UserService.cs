@@ -242,8 +242,12 @@ namespace ITsupport.Services.Impl
             );
 
 
+            var created =
+                await _userRepository.GetByIdAsync(user.Id)
+                ?? user;
+
             var response =
-                await MapUserResponseAsync(user);
+                await MapUserResponseAsync(created);
 
 
             return ApiResult<UserResponse>
@@ -316,8 +320,12 @@ namespace ITsupport.Services.Impl
                 .SaveChangesAsync();
 
 
+            var updated =
+                await _userRepository.GetByIdAsync(user.Id)
+                ?? user;
+
             var response =
-                await MapUserResponseAsync(user);
+                await MapUserResponseAsync(updated);
 
 
             return ApiResult<UserResponse>
