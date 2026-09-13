@@ -21,15 +21,34 @@ namespace ITsupport.Entities
         public string Description { get; set; } = string.Empty;
 
         public int RequesterId { get; set; }
+        [ForeignKey(nameof(RequesterId))]
+        public User? Requester { get; set; }
+
         public int? RequesterDepartmentId { get; set; }
+
         public int? CategoryId { get; set; }
+        [ForeignKey(nameof(CategoryId))]
+        public RequestCategory? Category { get; set; }
+
         public int PriorityId { get; set; }
+        [ForeignKey(nameof(PriorityId))]
+        public Priority? Priority { get; set; }
+
         public int StatusId { get; set; }
+        [ForeignKey(nameof(StatusId))]
+        public RequestStatus? Status { get; set; }
 
         public DateTime? DesiredDate { get; set; }
         public int? CurrentCoordinatorId { get; set; }
+
         public int? CurrentITGroupId { get; set; }
+        [ForeignKey(nameof(CurrentITGroupId))]
+        public ITGroup? CurrentITGroup { get; set; }
+
         public int? CurrentAssigneeId { get; set; }
+        [ForeignKey(nameof(CurrentAssigneeId))]
+        public User? CurrentAssignee { get; set; }
+
         public DateTime? ExpectedCompletionAt { get; set; }
         public int ReworkCount { get; set; } = 0;
         public DateTime? CompletedAt { get; set; }

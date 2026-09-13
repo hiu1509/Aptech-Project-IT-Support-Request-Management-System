@@ -14,9 +14,20 @@ namespace ITsupport.Repositories.Impl
             _context = context;
         }
 
+        private static IQueryable<SupportRequest> WithDetails(IQueryable<SupportRequest> query)
+        {
+            return query
+                .Include(r => r.Requester)
+                .Include(r => r.Category)
+                .Include(r => r.Priority)
+                .Include(r => r.Status)
+                .Include(r => r.CurrentITGroup)
+                .Include(r => r.CurrentAssignee);
+        }
+
         public async Task<(List<SupportRequest> Items, int TotalItems)> GetAllAsync(SupportRequestQueryParameters parameters)
         {
-            IQueryable<SupportRequest> query = _context.SupportRequests.AsNoTracking();
+            IQueryable<SupportRequest> query = WithDetails(_context.SupportRequests.AsNoTracking());
             query = ApplySearch(query, parameters.Keyword);
             query = ApplySorting(query, parameters.SortBy, parameters.SortDirection);
 
@@ -52,7 +63,7 @@ namespace ITsupport.Repositories.Impl
 
         public async Task<SupportRequest?> GetByIdAsync(long id)
         {
-            return await _context.SupportRequests.FirstOrDefaultAsync(r => r.Id == id);
+            return await WithDetails(_context.SupportRequests).FirstOrDefaultAsync(r => r.Id == id);
         }
 
         public async Task<bool> ExistsByCodeAsync(string requestCode)
