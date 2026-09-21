@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
 
@@ -541,6 +541,20 @@ namespace ITsupport.Services.Impl
             // Every new request starts at NEW.
             entity.StatusId =
                 newStatus.Id;
+
+
+            // -----------------------------------------------------
+            // CALCULATE SLA (ExpectedCompletionAt)
+            // -----------------------------------------------------
+
+            if (entity.PriorityId > 0)
+            {
+                var priority = await _context.Priorities.FindAsync(entity.PriorityId);
+                if (priority != null && priority.TargetResolutionHours.HasValue)
+                {
+                    entity.ExpectedCompletionAt = DateTime.UtcNow.AddHours(priority.TargetResolutionHours.Value);
+                }
+            }
 
 
             /*
@@ -1378,6 +1392,17 @@ namespace ITsupport.Services.Impl
 
             supportRequest.UpdatedAt =
                 DateTime.UtcNow;
+
+
+            // -----------------------------------------------------
+            // CALCULATE SLA (ExpectedCompletionAt)
+            // -----------------------------------------------------
+
+            var priorityInfo = await _context.Priorities.FindAsync(supportRequest.PriorityId);
+            if (priorityInfo != null && priorityInfo.TargetResolutionHours.HasValue)
+            {
+                supportRequest.ExpectedCompletionAt = DateTime.UtcNow.AddHours(priorityInfo.TargetResolutionHours.Value);
+            }
 
 
             // -----------------------------------------------------

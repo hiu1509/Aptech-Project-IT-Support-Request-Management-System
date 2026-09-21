@@ -85,6 +85,10 @@ builder.Services.AddScoped<IEmailNotificationRepository, EmailNotificationReposi
 // =========================================================
 
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<ISeedingService, SeedingService>();
+
+// SLA Monitor Background Service
+builder.Services.AddHostedService<SlaMonitorService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
