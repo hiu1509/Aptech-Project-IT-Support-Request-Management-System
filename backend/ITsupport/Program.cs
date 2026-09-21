@@ -251,7 +251,7 @@ app.MapControllers();
 
 
 // =========================================================
-// Ensure Database Exists
+// Apply EF Core Migrations + Seed Data
 // =========================================================
 
 using (var scope = app.Services.CreateScope())
@@ -260,7 +260,7 @@ using (var scope = app.Services.CreateScope())
         scope.ServiceProvider
             .GetRequiredService<ITsupportDbContext>();
 
-    dbContext.Database.EnsureCreated();
+    await dbContext.Database.MigrateAsync();
 
     await DbSeeder.SeedAsync(scope.ServiceProvider);
 }
