@@ -61,7 +61,6 @@ namespace ITsupport.Services.Impl
             var recentlyOverdueRequests = await context.SupportRequests
                 .Include(r => r.Status)
                 .Include(r => r.CurrentAssignee)
-                .Include(r => r.CurrentCoordinator)
                 .Where(r => 
                     r.Status != null && !r.Status.IsClosed &&
                     r.ExpectedCompletionAt.HasValue &&
@@ -83,9 +82,13 @@ namespace ITsupport.Services.Impl
                     }
                     
                     // 2. Notify Coordinator (if assigned)
-                    if (request.CurrentCoordinator != null && !string.IsNullOrWhiteSpace(request.CurrentCoordinator.Email))
+                    if (request.CurrentCoordinatorId.HasValue)
                     {
-                        await SendOverdueEmail(emailNotificationService, request, request.CurrentCoordinator.Id, request.CurrentCoordinator.Email, "Coordinator");
+                        var coordinator = await context.Users.FindAsync(request.CurrentCoordinatorId.Value);
+                        if (coordinator != null && !string.IsNullOrWhiteSpace(coordinator.Email))
+                        {
+                            await SendOverdueEmail(emailNotificationService, request, coordinator.Id, coordinator.Email, "Coordinator");
+                        }
                     }
 
                     // 3. Notify Leader (if assigned to a group)
