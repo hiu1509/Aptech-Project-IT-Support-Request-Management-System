@@ -4,6 +4,7 @@ using ITsupport.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ITsupport.Migrations
 {
     [DbContext(typeof(ITsupportDbContext))]
-    partial class ITsupportDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260923130545_AddSlaAndRatingToSupportRequest")]
+    partial class AddSlaAndRatingToSupportRequest
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

@@ -53,6 +53,20 @@ namespace ITsupport.Entities
         public int ReworkCount { get; set; } = 0;
         public DateTime? CompletedAt { get; set; }
 
+        // =====================================================
+        // SLA
+        // SlaStartTime: thoi diem bat dau tinh SLA (vd. luc duoc
+        // phan cong cho Nhan vien IT). IsOverdue: co da qua han
+        // ExpectedCompletionAt hay chua, tinh lai moi khi xem/cap
+        // nhat yeu cau (khong tu dong cap nhat theo thoi gian thuc).
+        // =====================================================
+
+        public DateTime? SlaStartTime { get; set; }
+        public bool IsOverdue { get; set; } = false;
+
+        // Danh gia cua nguoi gui sau khi xac nhan hoan thanh (UC19), 1-5 sao
+        public int? Rating { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
     }
