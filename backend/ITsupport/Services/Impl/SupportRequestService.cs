@@ -556,6 +556,9 @@ namespace ITsupport.Services.Impl
                 }
             }
 
+            // SLA bat dau tinh tu luc tao yeu cau.
+            entity.SlaStartTime = DateTime.UtcNow;
+
 
             /*
              * RequestCode is required in database.

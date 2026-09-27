@@ -80,5 +80,19 @@
         public DateTime CreatedAt { get; set; }
 
         public DateTime? CompletedAt { get; set; }
+
+
+        // =========================================================
+        // SLA / RATING
+        // SlaStartTime: thoi diem bat dau tinh SLA.
+        // IsOverdue: da qua han ExpectedCompletionAt hay chua.
+        // Rating: danh gia 1-5 sao sau khi hoan thanh.
+        // =========================================================
+
+        public DateTime? SlaStartTime { get; set; }
+
+        public bool IsOverdue { get; set; }
+
+        public int? Rating { get; set; }
     }
 }
