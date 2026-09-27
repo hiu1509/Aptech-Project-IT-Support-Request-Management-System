@@ -69,8 +69,8 @@ function LeaderDashboard() {
                             </h2>
 
                             <p>
-                                Review requests transferred to your IT group
-                                and assign them to suitable IT Staff members.
+                                Review requests in your IT group.
+                                IT staff assignment is automatic.
                             </p>
 
                         </div>
@@ -103,8 +103,8 @@ function LeaderDashboard() {
                             </div>
 
                             <p>
-                                Coordinate technical workload and assign
-                                support requests within your IT group.
+                                Follow the workload of your IT group.
+                                The system assigns each request.
                             </p>
 
                         </div>
@@ -117,12 +117,12 @@ function LeaderDashboard() {
                             </div>
 
                             <div className="leader-dashboard-info-value">
-                                Group → IT Staff
+                                Automatic
                             </div>
 
                             <p>
-                                Assign requests waiting for IT assignment
-                                to an appropriate IT Staff member.
+                                The system assigns each request to the
+                                IT staff member with the lightest workload.
                             </p>
 
                         </div>

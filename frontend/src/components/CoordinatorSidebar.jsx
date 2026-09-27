@@ -101,6 +101,19 @@ function CoordinatorSidebar() {
 
 
                 <NavLink
+                    to="/coordinator/sla"
+                    className={getItemClass}
+                >
+                    <svg viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="8" />
+                        <path d="M12 8V12L15 14" />
+                    </svg>
+
+                    <span>SLA</span>
+                </NavLink>
+
+
+                <NavLink
                     to="/coordinator/requests"
                     className={getItemClass}
                 >

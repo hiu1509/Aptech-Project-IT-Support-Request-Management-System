@@ -29,96 +29,55 @@ const WORKFLOW_STAGES = [
     },
     {
         number: 2,
-        title: "Coordinator Assignment",
-        role: "Admin / Coordinator",
+        title: "Automatic Assignment",
+        role: "System",
         description:
-            "The request is assigned to a Coordinator for initial review.",
-        statuses: [
-            "WAITING_COORDINATOR",
-        ],
-    },
-    {
-        number: 3,
-        title: "Initial Review",
-        role: "Coordinator",
-        description:
-            "Coordinator accepts the request and reviews the information provided.",
-        statuses: [
-            "ACCEPTED",
-            "NEED_INFO",
-        ],
-    },
-    {
-        number: 4,
-        title: "IT Group Assignment",
-        role: "Coordinator / IT Leader",
-        description:
-            "The request is routed to the appropriate IT support group.",
-        statuses: [
-            "WAITING_IT_ASSIGNMENT",
-        ],
-    },
-    {
-        number: 5,
-        title: "IT Staff Assignment",
-        role: "IT Leader",
-        description:
-            "An IT staff member is assigned to handle the request.",
+            "The system assigns the request to the IT staff member with the lightest workload.",
         statuses: [
             "ASSIGNED",
         ],
     },
     {
-        number: 6,
+        number: 3,
         title: "Handling",
         role: "IT Staff",
         description:
-            "Assigned IT staff accepts and works on the support request.",
+            "IT staff starts the request and works on it.",
         statuses: [
             "IN_PROGRESS",
         ],
     },
     {
-        number: 7,
-        title: "Internal Review",
-        role: "Coordinator",
-        description:
-            "Completed work is reviewed before being sent back to the requester.",
-        statuses: [
-            "WAITING_INTERNAL_REVIEW",
-        ],
-    },
-    {
-        number: 8,
-        title: "Rework",
-        role: "IT Staff",
-        description:
-            "The request is returned to the assigned IT staff when additional work is required.",
-        statuses: [
-            "REWORK",
-        ],
-        optional: true,
-    },
-    {
-        number: 9,
-        title: "User Confirmation",
+        number: 4,
+        title: "Waiting Confirmation",
         role: "Employee",
         description:
-            "Requester reviews the result and confirms whether the issue has been resolved.",
+            "IT staff uploads proof and marks the work complete. The employee confirms the result and rates it, or rejects it.",
         statuses: [
+            "WAITING_CONFIRMATION",
             "WAITING_USER_CONFIRMATION",
         ],
     },
     {
-        number: 10,
+        number: 5,
         title: "Completed",
-        role: "Employee / System",
+        role: "Employee",
         description:
-            "The requester confirms the resolution and the request is completed.",
+            "The employee confirms the result and submits a rating from 1 to 5.",
         statuses: [
             "COMPLETED",
-            "CLOSED",
         ],
+    },
+    {
+        number: 6,
+        title: "Rework",
+        role: "IT Staff",
+        description:
+            "The employee rejects the result. The request returns to the assigned IT staff.",
+        statuses: [
+            "REWORK",
+        ],
+        optional: true,
     },
 ];
 
@@ -879,10 +838,9 @@ function Workflow() {
                                 </strong>
 
                                 <p>
-                                    If internal review or requester confirmation fails,
-                                    the request moves to REWORK and returns to the
-                                    assigned IT staff. IT staff then starts rework and
-                                    the request returns to IN_PROGRESS.
+                                    If the employee rejects the result,
+                                    the request moves to REWORK and returns
+                                    to the assigned IT staff.
                                 </p>
 
                             </div>

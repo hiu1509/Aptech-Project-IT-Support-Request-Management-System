@@ -21,6 +21,12 @@ import {
     getUserById,
 } from "../services/userService";
 
+import {
+    WORKFLOW_STATUSES,
+    normalizeStatusCode,
+    statusLabel,
+} from "../utils/requestStatus";
+
 import "../css/CoordinatorRequests.css";
 
 
@@ -344,43 +350,26 @@ function CoordinatorRequests() {
     ) => {
 
         switch (
-        normalizeCode(
+        normalizeStatusCode(
             statusCode
         )
         ) {
 
             case "NEW":
-            case "WAITING_COORDINATOR":
                 return "waiting";
 
-
-            case "ACCEPTED":
-            case "CLASSIFIED":
-                return "accepted";
-
-
-            case "NEED_INFO":
-                return "need-info";
-
-
-            case "WAITING_IT_ASSIGNMENT":
             case "ASSIGNED":
             case "IN_PROGRESS":
                 return "transferred";
 
-
-            case "WAITING_INTERNAL_REVIEW":
-            case "WAITING_USER_CONFIRMATION":
+            case "WAITING_CONFIRMATION":
                 return "waiting";
-
 
             case "REWORK":
                 return "need-info";
 
-
             case "COMPLETED":
                 return "completed";
-
 
             default:
                 return "";
@@ -498,7 +487,9 @@ function CoordinatorRequests() {
                     const matchesStatus =
                         statusFilter ===
                         "ALL" ||
-                        requestStatusCode ===
+                        normalizeStatusCode(
+                            requestStatusCode
+                        ) ===
                         statusFilter;
 
 
@@ -666,37 +657,18 @@ function CoordinatorRequests() {
                             </option>
 
 
-                            {statuses
-                                .slice()
-                                .sort(
-                                    (a, b) =>
-                                        Number(
-                                            a.displayOrder ??
-                                            a.id
-                                        ) -
-                                        Number(
-                                            b.displayOrder ??
-                                            b.id
-                                        )
+                            {WORKFLOW_STATUSES.map(
+                                (item) => (
+
+                                    <option
+                                        key={item.code}
+                                        value={item.code}
+                                    >
+                                        {item.label}
+                                    </option>
+
                                 )
-                                .map(
-                                    (item) => (
-
-                                        <option
-                                            key={
-                                                item.id
-                                            }
-                                            value={
-                                                normalizeCode(
-                                                    item.code
-                                                )
-                                            }
-                                        >
-                                            {item.name}
-                                        </option>
-
-                                    )
-                                )}
+                            )}
 
                         </select>
 
@@ -1064,12 +1036,15 @@ function CoordinatorRequests() {
                                                                     )}`
                                                                 }
                                                             >
-                                                                {status?.name ||
+                                                                {statusLabel(
+                                                                    status?.code,
+                                                                    status?.name ||
                                                                     (
                                                                         request.statusId
                                                                             ? `Status #${request.statusId}`
                                                                             : "-"
-                                                                    )}
+                                                                    )
+                                                                )}
                                                             </span>
 
                                                         </td>

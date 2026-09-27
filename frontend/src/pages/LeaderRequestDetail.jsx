@@ -10,7 +10,6 @@ import {
 } from "react-router-dom";
 
 import {
-    assignITStaff,
     getRequestDetail,
     getRequestStatuses,
     getRequestCategories,
@@ -19,7 +18,6 @@ import {
 } from "../services/requestService";
 
 import {
-    getITGroupMembers,
     getITGroups,
 } from "../services/lookupService";
 
@@ -28,6 +26,12 @@ import LeaderSidebar
 
 import RequestAttachments
     from "../components/RequestAttachments";
+
+import {
+    requestRating,
+    statusDescription,
+    statusLabel,
+} from "../utils/requestStatus";
 
 import "../css/LeaderRequestDetail.css";
 
@@ -56,27 +60,8 @@ function LeaderRequestDetail() {
     const [itGroups, setITGroups] =
         useState([]);
 
-    const [groupMembers, setGroupMembers] =
-        useState([]);
-
     const [history, setHistory] =
         useState([]);
-
-
-    // =========================================================
-    // FORM STATE
-    // =========================================================
-
-    const [selectedStaffId, setSelectedStaffId] =
-        useState("");
-
-    const [
-        expectedCompletionAt,
-        setExpectedCompletionAt,
-    ] = useState("");
-
-    const [note, setNote] =
-        useState("");
 
 
     // =========================================================
@@ -86,13 +71,7 @@ function LeaderRequestDetail() {
     const [loading, setLoading] =
         useState(true);
 
-    const [actionLoading, setActionLoading] =
-        useState(false);
-
     const [error, setError] =
-        useState("");
-
-    const [success, setSuccess] =
         useState("");
 
 
@@ -154,34 +133,6 @@ function LeaderRequestDetail() {
                     ? historyData
                     : []
             );
-
-
-            if (
-                requestData?.currentITGroupId
-            ) {
-                const memberData =
-                    await getITGroupMembers(
-                        requestData.currentITGroupId
-                    );
-
-                setGroupMembers(
-                    Array.isArray(memberData)
-                        ? memberData.filter(
-                            (item) =>
-                                item.isActive !== false &&
-                                String(
-                                    item.memberRole || ""
-                                )
-                                    .trim()
-                                    .toUpperCase() ===
-                                "MEMBER"
-                        )
-                        : []
-                );
-            }
-            else {
-                setGroupMembers([]);
-            }
         }
         catch (err) {
             console.error(
@@ -275,75 +226,6 @@ function LeaderRequestDetail() {
                 request?.currentITGroupId,
             ]
         );
-
-
-    // =========================================================
-    // ASSIGN IT STAFF
-    // =========================================================
-
-    const handleAssignITStaff =
-        async () => {
-
-            if (!selectedStaffId) {
-                setError(
-                    "Please select an IT staff member."
-                );
-                setSuccess("");
-                return;
-            }
-
-            if (
-                status?.code !==
-                "WAITING_IT_ASSIGNMENT"
-            ) {
-                setError(
-                    "This request is no longer waiting for IT staff assignment."
-                );
-                setSuccess("");
-                return;
-            }
-
-            try {
-                setActionLoading(true);
-                setError("");
-                setSuccess("");
-
-                await assignITStaff(
-                    id,
-                    selectedStaffId,
-                    expectedCompletionAt
-                        ? new Date(
-                            expectedCompletionAt
-                        ).toISOString()
-                        : null,
-                    note
-                );
-
-                setSuccess(
-                    "IT staff assigned successfully."
-                );
-
-                setSelectedStaffId("");
-                setExpectedCompletionAt("");
-                setNote("");
-
-                await loadData();
-            }
-            catch (err) {
-                console.error(
-                    "Unable to assign IT staff:",
-                    err
-                );
-
-                setError(
-                    err?.message ||
-                    "Unable to assign IT staff."
-                );
-            }
-            finally {
-                setActionLoading(false);
-            }
-        };
 
 
     // =========================================================
@@ -489,15 +371,6 @@ function LeaderRequestDetail() {
                         )}
 
 
-                        {success && (
-
-                            <div className="leader-detail-message success">
-                                {success}
-                            </div>
-
-                        )}
-
-
                         {/* =================================================
                             REQUEST OVERVIEW
                            ================================================= */}
@@ -524,9 +397,12 @@ function LeaderRequestDetail() {
                                     <InfoItem
                                         label="Status"
                                         value={
-                                            status?.name ||
-                                            status?.code ||
-                                            `Status ${request.statusId}`
+                                            statusLabel(
+                                                status?.code,
+                                                status?.name ||
+                                                status?.code ||
+                                                `Status ${request.statusId}`
+                                            )
                                         }
                                     />
 
@@ -597,188 +473,58 @@ function LeaderRequestDetail() {
                             ASSIGN IT STAFF
                            ================================================= */}
 
-                        {status?.code ===
-                            "WAITING_IT_ASSIGNMENT" && (
+                        <section className="leader-detail-card">
 
-                                <section className="leader-detail-card">
+                            <div className="leader-detail-card-header">
 
-                                    <div className="leader-detail-card-header">
+                                <h2>
+                                    Assigned IT Staff
+                                </h2>
 
-                                        <h2>
-                                            Assign IT Staff
-                                        </h2>
+                                <p>
+                                    {statusDescription(
+                                        status?.code
+                                    )}
+                                </p>
 
-                                        <p>
-                                            Assign this request to an IT Staff member from{" "}
-                                            <strong>
-                                                {currentITGroup?.name ||
-                                                    "the current IT group"}
-                                            </strong>
-                                            .
-                                        </p>
-
-                                    </div>
+                            </div>
 
 
-                                    <div className="leader-detail-card-body">
+                            <div className="leader-detail-card-body">
 
-                                        <div className="leader-detail-grid">
+                                <div className="leader-detail-grid">
 
-                                            <div className="leader-detail-field">
+                                    <InfoItem
+                                        label="Assigned IT Staff"
+                                        value={
+                                            request.currentAssigneeName ||
+                                            (
+                                                request.currentAssigneeId
+                                                    ? `User #${request.currentAssigneeId}`
+                                                    : "Not assigned yet"
+                                            )
+                                        }
+                                    />
 
-                                                <label>
-                                                    IT Staff
-                                                </label>
+                                    <InfoItem
+                                        label="Rating"
+                                        value={
+                                            requestRating(request) ||
+                                            "Not rated yet"
+                                        }
+                                    />
 
-                                                <select
-                                                    value={
-                                                        selectedStaffId
-                                                    }
-                                                    onChange={(e) => {
-                                                        setSelectedStaffId(
-                                                            e.target.value
-                                                        );
-                                                        setError("");
-                                                    }}
-                                                    disabled={
-                                                        actionLoading
-                                                    }
-                                                >
+                                </div>
 
-                                                    <option value="">
-                                                        Select IT staff
-                                                    </option>
+                            </div>
 
-                                                    {groupMembers.map(
-                                                        (member) => (
-
-                                                            <option
-                                                                key={
-                                                                    member.userId
-                                                                }
-                                                                value={
-                                                                    member.userId
-                                                                }
-                                                            >
-                                                                {member.userFullName}
-                                                                {member.userEmail
-                                                                    ? ` (${member.userEmail})`
-                                                                    : ""}
-                                                            </option>
-
-                                                        )
-                                                    )}
-
-                                                </select>
-
-
-                                                {groupMembers.length === 0 && (
-
-                                                    <div
-                                                        style={{
-                                                            marginTop: "6px",
-                                                            color: "#b42318",
-                                                            fontSize: "10.5px",
-                                                        }}
-                                                    >
-                                                        No active IT staff found in this group.
-                                                    </div>
-
-                                                )}
-
-                                            </div>
-
-
-                                            <div className="leader-detail-field">
-
-                                                <label>
-                                                    Expected Completion
-                                                </label>
-
-                                                <input
-                                                    type="datetime-local"
-                                                    value={
-                                                        expectedCompletionAt
-                                                    }
-                                                    onChange={(e) =>
-                                                        setExpectedCompletionAt(
-                                                            e.target.value
-                                                        )
-                                                    }
-                                                    disabled={
-                                                        actionLoading
-                                                    }
-                                                />
-
-                                            </div>
-
-                                        </div>
-
-
-                                        <div className="leader-detail-field">
-
-                                            <label>
-                                                Assignment Note
-                                            </label>
-
-                                            <textarea
-                                                value={note}
-                                                onChange={(e) =>
-                                                    setNote(
-                                                        e.target.value
-                                                    )
-                                                }
-                                                maxLength={1000}
-                                                rows={4}
-                                                disabled={
-                                                    actionLoading
-                                                }
-                                                placeholder="Add a note for the IT staff..."
-                                            />
-
-                                            <div
-                                                style={{
-                                                    marginTop: "6px",
-                                                    textAlign: "right",
-                                                    color: "#98a2b3",
-                                                    fontSize: "10px",
-                                                }}
-                                            >
-                                                {note.length}/1000
-                                            </div>
-
-                                        </div>
-
-
-                                        <div className="leader-detail-actions">
-
-                                            <button
-                                                type="button"
-                                                className="leader-detail-primary-button"
-                                                onClick={
-                                                    handleAssignITStaff
-                                                }
-                                                disabled={
-                                                    actionLoading ||
-                                                    !selectedStaffId
-                                                }
-                                            >
-                                                {actionLoading
-                                                    ? "Assigning..."
-                                                    : "Assign IT Staff"}
-                                            </button>
-
-                                        </div>
-
-                                    </div>
-
-                                </section>
-
-                            )}
+                        </section>
 
 
                         <RequestAttachments
                             requestId={id}
+                            title="Proof images"
+                            description="Photos IT staff uploaded before asking the employee to confirm the result."
                         />
 
 

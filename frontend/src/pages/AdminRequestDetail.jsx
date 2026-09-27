@@ -20,16 +20,19 @@ import {
     getRequestStatuses,
     getRequestHistory,
     getRequestAssignments,
-    assignCoordinator,
 } from "../services/requestService";
 
 import {
-    getCoordinators,
     getUserById,
 } from "../services/userService";
 
 import RequestAttachments
     from "../components/RequestAttachments";
+
+import {
+    requestRating,
+    statusLabel,
+} from "../utils/requestStatus";
 
 import "../css/AdminRequestDetail.css";
 
@@ -74,12 +77,6 @@ function AdminRequestDetail() {
     const [currentAssignee, setCurrentAssignee] =
         useState(null);
 
-    const [coordinators, setCoordinators] =
-        useState([]);
-
-    const [selectedCoordinator, setSelectedCoordinator] =
-        useState("");
-
 
     // =========================================================
     // UI STATE
@@ -88,13 +85,7 @@ function AdminRequestDetail() {
     const [loading, setLoading] =
         useState(true);
 
-    const [assigning, setAssigning] =
-        useState(false);
-
     const [error, setError] =
-        useState("");
-
-    const [success, setSuccess] =
         useState("");
 
 
@@ -143,8 +134,6 @@ function AdminRequestDetail() {
                     getRequestHistory(id),
 
                     getRequestAssignments(id),
-
-                    getCoordinators(),
                 ]);
 
 
@@ -154,7 +143,6 @@ function AdminRequestDetail() {
                 statusResult,
                 historyResult,
                 assignmentResult,
-                coordinatorResult,
             ] = results;
 
 
@@ -233,27 +221,6 @@ function AdminRequestDetail() {
 
 
             // -------------------------------------------------
-            // COORDINATOR LIST
-            // -------------------------------------------------
-
-            const coordinatorItems =
-                coordinatorResult.status === "fulfilled"
-                    ? (
-                        coordinatorResult.value?.items ??
-                        coordinatorResult.value ??
-                        []
-                    )
-                    : [];
-
-
-            setCoordinators(
-                Array.isArray(coordinatorItems)
-                    ? coordinatorItems
-                    : []
-            );
-
-
-            // -------------------------------------------------
             // CURRENT ASSIGNMENT IDS
             // -------------------------------------------------
 
@@ -295,16 +262,6 @@ function AdminRequestDetail() {
                 requestData?.currentAssigneeId ??
                 staffAssignment?.assignedToUserId ??
                 null;
-
-
-            if (coordinatorId) {
-                setSelectedCoordinator(
-                    String(coordinatorId)
-                );
-            }
-            else {
-                setSelectedCoordinator("");
-            }
 
 
             // -------------------------------------------------
@@ -486,60 +443,6 @@ function AdminRequestDetail() {
         request,
         assignments,
     ]);
-
-
-    // =========================================================
-    // ASSIGN COORDINATOR
-    // =========================================================
-
-    const handleAssignCoordinator =
-        async () => {
-
-            if (!selectedCoordinator) {
-
-                setError(
-                    "Please select a coordinator."
-                );
-
-                return;
-            }
-
-
-            try {
-                setAssigning(true);
-                setError("");
-                setSuccess("");
-
-
-                await assignCoordinator(
-                    id,
-                    selectedCoordinator
-                );
-
-
-                setSuccess(
-                    "Coordinator assigned successfully."
-                );
-
-
-                await loadPage();
-            }
-            catch (err) {
-                console.error(
-                    "Unable to assign coordinator:",
-                    err
-                );
-
-
-                setError(
-                    err?.message ||
-                    "Unable to assign coordinator."
-                );
-            }
-            finally {
-                setAssigning(false);
-            }
-        };
 
 
     // =========================================================
@@ -773,17 +676,6 @@ function AdminRequestDetail() {
                     )}
 
 
-                    {/* SUCCESS */}
-
-                    {success && (
-
-                        <div className="admin-detail-success">
-                            {success}
-                        </div>
-
-                    )}
-
-
                     <div className="admin-detail-columns">
 
 
@@ -877,8 +769,11 @@ function AdminRequestDetail() {
                                         </span>
 
                                         <strong>
-                                            {status?.name ||
-                                                "Unknown"}
+                                            {statusLabel(
+                                                status?.code,
+                                                status?.name ||
+                                                "Unknown"
+                                            )}
                                         </strong>
 
                                     </div>
@@ -950,6 +845,8 @@ function AdminRequestDetail() {
 
                             <RequestAttachments
                                 requestId={id}
+                                title="Proof images"
+                                description="Photos IT staff uploaded before asking the employee to confirm the result."
                             />
 
 
@@ -1111,7 +1008,22 @@ function AdminRequestDetail() {
 
                                         <strong>
                                             {currentAssignee?.fullName ||
-                                                "Not assigned"}
+                                                request?.currentAssigneeName ||
+                                                "Not assigned yet"}
+                                        </strong>
+
+                                    </div>
+
+
+                                    <div>
+
+                                        <span>
+                                            Rating
+                                        </span>
+
+                                        <strong>
+                                            {requestRating(request) ||
+                                                "Not rated yet"}
                                         </strong>
 
                                     </div>
@@ -1119,112 +1031,12 @@ function AdminRequestDetail() {
                                 </div>
 
 
-                                {/* =================================================
-                                    ASSIGN / REASSIGN COORDINATOR
-                                   ================================================= */}
-
-                                {status?.code === "NEW" && (
-
-                                    <div className="admin-assign-section">
-
-                                        <label htmlFor="coordinator">
-
-                                            {currentCoordinator
-                                                ? "Reassign Coordinator"
-                                                : "Assign Coordinator"}
-
-                                        </label>
-
-
-                                        <select
-                                            id="coordinator"
-                                            value={
-                                                selectedCoordinator
-                                            }
-                                            onChange={(e) =>
-                                                setSelectedCoordinator(
-                                                    e.target.value
-                                                )
-                                            }
-                                            disabled={
-                                                assigning
-                                            }
-                                        >
-
-                                            <option value="">
-                                                Select coordinator
-                                            </option>
-
-
-                                            {coordinators.map(
-                                                (coordinator) => (
-
-                                                    <option
-                                                        key={
-                                                            coordinator.id
-                                                        }
-                                                        value={
-                                                            coordinator.id
-                                                        }
-                                                    >
-                                                        {
-                                                            coordinator.fullName
-                                                        }
-                                                    </option>
-
-                                                )
-                                            )}
-
-                                        </select>
-
-
-                                        {coordinators.length === 0 && (
-
-                                            <div className="admin-assignment-help">
-                                                No coordinator accounts were returned by the User API.
-                                            </div>
-
-                                        )}
-
-
-                                        <button
-                                            type="button"
-                                            onClick={
-                                                handleAssignCoordinator
-                                            }
-                                            disabled={
-                                                assigning ||
-                                                !selectedCoordinator
-                                            }
-                                        >
-
-                                            {assigning
-                                                ? "Assigning..."
-                                                : currentCoordinator
-                                                    ? "Reassign Coordinator"
-                                                    : "Assign Coordinator"}
-
-                                        </button>
-
-                                    </div>
-
-                                )}
-
-
-                                {/* WORKFLOW NOTE */}
-
-                                {status?.code === "NEW" &&
-                                    currentCoordinator && (
-
-                                        <div className="admin-workflow-warning">
-
-                                            Coordinator assignment exists,
-                                            but this request is still in
-                                            New status.
-
-                                        </div>
-
-                                    )}
+                                <div className="admin-assignment-help">
+                                    The system assigns this request
+                                    automatically to the IT staff member
+                                    with the lightest workload. Admin
+                                    does not assign it manually.
+                                </div>
 
                             </section>
 

@@ -110,6 +110,33 @@ function LeaderSidebar() {
                     type="button"
                     className={
                         `leader-sidebar-item ${isActive(
+                            "/leader/sla"
+                        )
+                            ? "active"
+                            : ""
+                        }`
+                    }
+                    onClick={() =>
+                        navigate(
+                            "/leader/sla"
+                        )
+                    }
+                >
+                    <svg viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="8" />
+                        <path d="M12 8V12L15 14" />
+                    </svg>
+
+                    <span>
+                        SLA
+                    </span>
+                </button>
+
+
+                <button
+                    type="button"
+                    className={
+                        `leader-sidebar-item ${isActive(
                             "/leader/requests"
                         )
                             ? "active"

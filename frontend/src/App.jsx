@@ -16,6 +16,7 @@ import Settings from "./pages/Settings";
 import ITGroups from "./pages/ITGroups";
 import Workflow from "./pages/Workflow";
 import Reports from "./pages/Reports";
+import SlaDashboard from "./pages/SlaDashboard";
 
 import EmployeeDashboard from "./pages/EmployeeDashboard";
 import EmployeeNewRequest from "./pages/EmployeeNewRequest";
@@ -35,6 +36,9 @@ import LeaderTeam from "./pages/LeaderTeam";
 import ITStaffDashboard from "./pages/ITStaffDashboard";
 import ITStaffRequests from "./pages/ITStaffRequests";
 import ITStaffRequestDetail from "./pages/ITStaffRequestDetail";
+
+// Global theme layer - phai import SAU cung de ghi de tung trang.
+import "./css/theme.css";
 
 function App() {
     const token =
@@ -173,6 +177,20 @@ function App() {
                 element={
                     token && isAdmin
                         ? <Dashboard />
+                        : (
+                            <Navigate
+                                to={getHomeRoute()}
+                                replace
+                            />
+                        )
+                }
+            />
+
+            <Route
+                path="/sla"
+                element={
+                    token && isAdmin
+                        ? <SlaDashboard variant="admin" />
                         : (
                             <Navigate
                                 to={getHomeRoute()}
@@ -431,6 +449,20 @@ function App() {
                 }
             />
 
+            <Route
+                path="/coordinator/sla"
+                element={
+                    token && isCoordinator
+                        ? <SlaDashboard variant="coordinator" />
+                        : (
+                            <Navigate
+                                to={getHomeRoute()}
+                                replace
+                            />
+                        )
+                }
+            />
+
 
             <Route
                 path="/coordinator/requests"
@@ -470,6 +502,20 @@ function App() {
                 element={
                     token && isLeader
                         ? <LeaderDashboard />
+                        : (
+                            <Navigate
+                                to={getHomeRoute()}
+                                replace
+                            />
+                        )
+                }
+            />
+
+            <Route
+                path="/leader/sla"
+                element={
+                    token && isLeader
+                        ? <SlaDashboard variant="leader" />
                         : (
                             <Navigate
                                 to={getHomeRoute()}

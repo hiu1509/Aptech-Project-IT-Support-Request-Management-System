@@ -21,6 +21,12 @@ import {
 import LeaderSidebar
     from "../components/LeaderSidebar";
 
+import {
+    WORKFLOW_STATUSES,
+    normalizeStatusCode,
+    statusLabel,
+} from "../utils/requestStatus";
+
 import "../css/LeaderRequests.css";
 
 
@@ -202,11 +208,11 @@ function LeaderRequests() {
     ) => {
 
         switch (
-        normalizeCode(
+        normalizeStatusCode(
             statusCode
         )
         ) {
-            case "WAITING_IT_ASSIGNMENT":
+            case "NEW":
                 return "waiting";
 
             case "ASSIGNED":
@@ -215,8 +221,11 @@ function LeaderRequests() {
             case "IN_PROGRESS":
                 return "in-progress";
 
-            case "WAITING_INTERNAL_REVIEW":
+            case "WAITING_CONFIRMATION":
                 return "review";
+
+            case "REWORK":
+                return "waiting";
 
             case "COMPLETED":
                 return "completed";
@@ -268,7 +277,7 @@ function LeaderRequests() {
 
                     const matchesStatus =
                         statusFilter === "ALL" ||
-                        normalizeCode(
+                        normalizeStatusCode(
                             requestStatus?.code
                         ) ===
                         statusFilter;
@@ -441,37 +450,18 @@ function LeaderRequests() {
                                 All Statuses
                             </option>
 
-                            {statuses
-                                .slice()
-                                .sort(
-                                    (a, b) =>
-                                        Number(
-                                            a.displayOrder ??
-                                            a.id
-                                        ) -
-                                        Number(
-                                            b.displayOrder ??
-                                            b.id
-                                        )
+                            {WORKFLOW_STATUSES.map(
+                                (item) => (
+
+                                    <option
+                                        key={item.code}
+                                        value={item.code}
+                                    >
+                                        {item.label}
+                                    </option>
+
                                 )
-                                .map(
-                                    (item) => (
-
-                                        <option
-                                            key={
-                                                item.id
-                                            }
-                                            value={
-                                                normalizeCode(
-                                                    item.code
-                                                )
-                                            }
-                                        >
-                                            {item.name}
-                                        </option>
-
-                                    )
-                                )}
+                            )}
 
                         </select>
 
@@ -660,9 +650,12 @@ function LeaderRequests() {
                                                                     )}`
                                                                 }
                                                             >
-                                                                {requestStatus?.name ||
+                                                                {statusLabel(
+                                                                    requestStatus?.code,
+                                                                    requestStatus?.name ||
                                                                     requestStatus?.code ||
-                                                                    `Status ${request.statusId}`}
+                                                                    `Status ${request.statusId}`
+                                                                )}
                                                             </span>
 
                                                         </td>

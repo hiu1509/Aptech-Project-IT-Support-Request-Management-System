@@ -9,17 +9,7 @@ import {
     getPriorities,
     getRequestStatuses,
     getRequestHistory,
-    acceptRequest,
-    requestMoreInformation,
-    classifyRequest,
-    assignITGroup,
-    internalReviewPass,
-    internalReviewFail,
 } from "../services/requestService";
-
-import {
-    getITGroups,
-} from "../services/lookupService";
 
 import {
     getUserById,
@@ -27,6 +17,12 @@ import {
 
 import RequestAttachments
     from "../components/RequestAttachments";
+
+import {
+    statusDescription,
+    statusLabel,
+    requestRating,
+} from "../utils/requestStatus";
 
 import "../css/CoordinatorRequestDetail.css";
 
@@ -64,12 +60,6 @@ function CoordinatorRequestDetail() {
     const [statusList, setStatusList] =
         useState([]);
 
-    const [categoryList, setCategoryList] =
-        useState([]);
-
-    const [priorityList, setPriorityList] =
-        useState([]);
-
     const [historyUsers, setHistoryUsers] =
         useState({});
 
@@ -88,50 +78,6 @@ function CoordinatorRequestDetail() {
 
     const [reloadKey, setReloadKey] =
         useState(0);
-
-    const [accepting, setAccepting] =
-        useState(false);
-
-    const [actionError, setActionError] =
-        useState("");
-
-    const [actionSuccess, setActionSuccess] =
-        useState("");
-
-    const [requestInfoMessage, setRequestInfoMessage] = useState("");
-    const [requestingInfo, setRequestingInfo] = useState(false);
-    const [classifyCategoryId, setClassifyCategoryId] =
-        useState("");
-
-    const [classifyPriorityId, setClassifyPriorityId] =
-        useState("");
-
-    const [classifyNote, setClassifyNote] =
-        useState("");
-
-    const [classifying, setClassifying] =
-        useState(false);
-
-    const [itGroupList, setItGroupList] =
-        useState([]);
-
-    const [selectedITGroupId, setSelectedITGroupId] =
-        useState("");
-
-    const [transferNote, setTransferNote] =
-        useState("");
-
-    const [transferringITGroup, setTransferringITGroup] =
-        useState(false);
-
-    const [reviewingPass, setReviewingPass] =
-        useState(false);
-
-    const [reworkReason, setReworkReason] =
-        useState("");
-
-    const [reviewingFail, setReviewingFail] =
-        useState(false);
 
     // =========================================================
     // SAFE ASYNC HELPER
@@ -199,7 +145,6 @@ function CoordinatorRequestDetail() {
                         categories,
                         priorities,
                         statuses,
-                        itGroups,
                         requesterData,
                         assigneeData,
                         historyData,
@@ -229,11 +174,6 @@ function CoordinatorRequestDetail() {
                                     pageNumber: 1,
                                     pageSize: 200,
                                 }),
-                            []
-                        ),
-
-                        safeRequest(
-                            () => getITGroups(),
                             []
                         ),
 
@@ -307,18 +247,6 @@ function CoordinatorRequestDetail() {
                         matchedPriority || null
                     );
 
-                    setClassifyCategoryId(
-                        data.categoryId
-                            ? String(data.categoryId)
-                            : ""
-                    );
-
-                    setClassifyPriorityId(
-                        data.priorityId
-                            ? String(data.priorityId)
-                            : ""
-                    );
-
                     setStatus(
                         matchedStatus || null
                     );
@@ -326,26 +254,6 @@ function CoordinatorRequestDetail() {
                     setStatusList(
                         Array.isArray(statuses)
                             ? statuses
-                            : []
-                    );
-
-                    setCategoryList(
-                        Array.isArray(categories)
-                            ? categories
-                            : []
-                    );
-
-                    setPriorityList(
-                        Array.isArray(priorities)
-                            ? priorities
-                            : []
-                    );
-
-                    setItGroupList(
-                        Array.isArray(itGroups)
-                            ? itGroups.filter(
-                                (item) => item.isActive !== false
-                            )
                             : []
                     );
 
@@ -464,363 +372,6 @@ function CoordinatorRequestDetail() {
     }, [loadRequest]);
 
     // =========================================================
-    // ACCEPT REQUEST
-    //
-    // WAITING_COORDINATOR -> ACCEPTED
-    // =========================================================
-
-    const handleAcceptRequest = async () => {
-        if (accepting) {
-            return;
-        }
-
-
-        if (status?.code !== "WAITING_COORDINATOR") {
-            setActionError(
-                "This request is not waiting for coordinator acceptance."
-            );
-
-            return;
-        }
-
-
-        try {
-            setAccepting(true);
-            setActionError("");
-            setActionSuccess("");
-
-
-            await acceptRequest(id);
-
-
-            setActionSuccess(
-                "Request accepted successfully."
-            );
-
-
-            // Reload request + status from API.
-            setReloadKey(
-                (current) =>
-                    current + 1
-            );
-        }
-        catch (err) {
-            console.error(
-                "Unable to accept request:",
-                err
-            );
-
-
-            setActionError(
-                err?.message ||
-                "Unable to accept this request."
-            );
-        }
-        finally {
-            setAccepting(false);
-        }
-    };
-
-    const handleRequestMoreInformation = async () => {
-        const message =
-            requestInfoMessage.trim();
-
-        if (!message) {
-            setActionError(
-                "Please enter the information you need from the requester."
-            );
-
-            setActionSuccess("");
-            return;
-        }
-
-        try {
-            setRequestingInfo(true);
-            setActionError("");
-            setActionSuccess("");
-
-            await requestMoreInformation(
-                id,
-                message
-            );
-
-            setRequestInfoMessage("");
-
-            setActionSuccess(
-                "Request for additional information was sent successfully."
-            );
-
-            setReloadKey(
-                (prev) => prev + 1
-            );
-        }
-        catch (err) {
-            setActionError(
-                err?.message ||
-                "Unable to request additional information."
-            );
-        }
-        finally {
-            setRequestingInfo(false);
-        }
-    };
-
-    // =========================================================
-    // CLASSIFY REQUEST
-    //
-    // ACCEPTED -> CLASSIFIED
-    // =========================================================
-
-    const handleClassifyRequest = async () => {
-
-        if (!classifyCategoryId) {
-            setActionError(
-                "Please select a request category."
-            );
-            setActionSuccess("");
-            return;
-        }
-
-        if (!classifyPriorityId) {
-            setActionError(
-                "Please select a priority."
-            );
-            setActionSuccess("");
-            return;
-        }
-
-        if (status?.code !== "ACCEPTED") {
-            setActionError(
-                "Only accepted requests can be classified."
-            );
-            setActionSuccess("");
-            return;
-        }
-
-        try {
-            setClassifying(true);
-            setActionError("");
-            setActionSuccess("");
-
-            await classifyRequest(
-                id,
-                classifyCategoryId,
-                classifyPriorityId,
-                classifyNote
-            );
-
-            setClassifyNote("");
-
-            setActionSuccess(
-                "Request classified successfully."
-            );
-
-            setReloadKey(
-                (prev) => prev + 1
-            );
-        }
-        catch (err) {
-
-            console.error(
-                "Unable to classify request:",
-                err
-            );
-
-            setActionError(
-                err?.message ||
-                "Unable to classify this request."
-            );
-        }
-        finally {
-            setClassifying(false);
-        }
-    };
-
-    // =========================================================
-    // TRANSFER TO IT GROUP
-    //
-    // CLASSIFIED -> WAITING_IT_ASSIGNMENT
-    // =========================================================
-
-    const handleTransferToITGroup = async () => {
-
-        if (!selectedITGroupId) {
-            setActionError(
-                "Please select an IT group."
-            );
-            setActionSuccess("");
-            return;
-        }
-
-        if (status?.code !== "CLASSIFIED") {
-            setActionError(
-                "Only classified requests can be transferred to an IT group."
-            );
-            setActionSuccess("");
-            return;
-        }
-
-        try {
-            setTransferringITGroup(true);
-            setActionError("");
-            setActionSuccess("");
-
-            await assignITGroup(
-                id,
-                selectedITGroupId,
-                transferNote
-            );
-
-            setSelectedITGroupId("");
-            setTransferNote("");
-
-            setActionSuccess(
-                "Request transferred to the IT group successfully."
-            );
-
-            setReloadKey(
-                (prev) => prev + 1
-            );
-        }
-        catch (err) {
-
-            console.error(
-                "Unable to transfer request to IT group:",
-                err
-            );
-
-            setActionError(
-                err?.message ||
-                "Unable to transfer this request to an IT group."
-            );
-        }
-        finally {
-            setTransferringITGroup(false);
-        }
-    };
-
-    // =========================================================
-    // INTERNAL REVIEW PASS
-    //
-    // WAITING_INTERNAL_REVIEW -> WAITING_USER_CONFIRMATION
-    // =========================================================
-
-    const handleInternalReviewPass = async () => {
-
-        if (status?.code !== "WAITING_INTERNAL_REVIEW") {
-            setActionError(
-                "This request is not waiting for internal review."
-            );
-            setActionSuccess("");
-            return;
-        }
-
-        try {
-            setReviewingPass(true);
-            setActionError("");
-            setActionSuccess("");
-
-            await internalReviewPass(id);
-
-            setActionSuccess(
-                "Internal review passed successfully. The request is now waiting for user confirmation."
-            );
-
-            setReloadKey(
-                (prev) => prev + 1
-            );
-        }
-        catch (err) {
-
-            console.error(
-                "Unable to pass internal review:",
-                err
-            );
-
-            setActionError(
-                err?.message ||
-                "Unable to pass the internal review."
-            );
-        }
-        finally {
-            setReviewingPass(false);
-        }
-    };
-
-    // =========================================================
-    // INTERNAL REVIEW FAIL
-    //
-    // WAITING_INTERNAL_REVIEW -> REWORK
-    // =========================================================
-
-    const handleInternalReviewFail = async () => {
-
-        if (status?.code !== "WAITING_INTERNAL_REVIEW") {
-            setActionError(
-                "This request is not waiting for internal review."
-            );
-            setActionSuccess("");
-            return;
-        }
-
-        const reason =
-            reworkReason.trim();
-
-        if (!reason) {
-            setActionError(
-                "Please enter a reason for requesting rework."
-            );
-            setActionSuccess("");
-            return;
-        }
-
-        const confirmed =
-            window.confirm(
-                "Send this request back to IT staff for rework?"
-            );
-
-        if (!confirmed) {
-            return;
-        }
-
-        try {
-            setReviewingFail(true);
-            setActionError("");
-            setActionSuccess("");
-
-            await internalReviewFail(
-                id,
-                reason
-            );
-
-            setReworkReason("");
-
-            setActionSuccess(
-                "Rework requested successfully. The request has been returned to IT staff."
-            );
-
-            setReloadKey(
-                (prev) => prev + 1
-            );
-        }
-        catch (err) {
-
-            console.error(
-                "Unable to request rework:",
-                err
-            );
-
-            setActionError(
-                err?.message ||
-                "Unable to request rework."
-            );
-        }
-        finally {
-            setReviewingFail(false);
-        }
-    };
-
-    // =========================================================
     // FORMAT DATE TIME
     // =========================================================
 
@@ -915,11 +466,14 @@ function CoordinatorRequestDetail() {
 
 
     const statusName =
-        status?.name ||
-        (
-            request?.statusId
-                ? `Status #${request.statusId}`
-                : "-"
+        statusLabel(
+            status?.code,
+            status?.name ||
+            (
+                request?.statusId
+                    ? `Status #${request.statusId}`
+                    : "-"
+            )
         );
 
     const getStatusNameById = (statusId) => {
@@ -937,8 +491,11 @@ function CoordinatorRequestDetail() {
                 )
                 : null;
 
-        return matchedStatus?.name ||
-            `Status #${statusId}`;
+        return statusLabel(
+            matchedStatus?.code,
+            matchedStatus?.name ||
+            `Status #${statusId}`
+        );
     };
 
     // =========================================================
@@ -1126,8 +683,7 @@ function CoordinatorRequestDetail() {
 
 
                             <p>
-                                Review request information and
-                                coordinate the next handling steps.
+                                Review the request, the assigned IT staff, and the proof images.
                             </p>
 
                         </div>
@@ -1149,118 +705,11 @@ function CoordinatorRequestDetail() {
                         </span>
 
                         <strong>
-                            {statusName}
+                            {statusLabel(
+                                status?.code,
+                                statusName
+                            )}
                         </strong>
-
-                    </div>
-
-
-                    <div className="coordinator-quick-actions-right">
-
-                        {status?.code === "WAITING_COORDINATOR" && (
-
-                            <button
-                                type="button"
-                                className="coordinator-quick-primary"
-                                onClick={handleAcceptRequest}
-                                disabled={accepting}
-                            >
-                                {accepting
-                                    ? "Accepting..."
-                                    : "Accept Request"}
-                            </button>
-
-                        )}
-
-
-                        {status?.code === "ACCEPTED" && (
-
-                            <>
-                                <button
-                                    type="button"
-                                    className="coordinator-quick-secondary"
-                                    onClick={() => {
-                                        document
-                                            .getElementById("coordinator-request-info-section")
-                                            ?.scrollIntoView({
-                                                behavior: "smooth",
-                                                block: "start",
-                                            });
-                                    }}
-                                >
-                                    Request More Information
-                                </button>
-
-                                <button
-                                    type="button"
-                                    className="coordinator-quick-primary"
-                                    onClick={() => {
-                                        document
-                                            .getElementById("coordinator-classify-section")
-                                            ?.scrollIntoView({
-                                                behavior: "smooth",
-                                                block: "start",
-                                            });
-                                    }}
-                                >
-                                    Classify Request
-                                </button>
-                            </>
-
-                        )}
-
-
-                        {status?.code === "CLASSIFIED" && (
-
-                            <button
-                                type="button"
-                                className="coordinator-quick-primary"
-                                onClick={() => {
-                                    document
-                                        .getElementById("coordinator-transfer-section")
-                                        ?.scrollIntoView({
-                                            behavior: "smooth",
-                                            block: "start",
-                                        });
-                                }}
-                            >
-                                Transfer to IT Group
-                            </button>
-
-                        )}
-
-
-                        {status?.code === "WAITING_INTERNAL_REVIEW" && (
-
-                            <>
-                                <button
-                                    type="button"
-                                    className="coordinator-quick-secondary danger"
-                                    onClick={() => {
-                                        document
-                                            .getElementById("coordinator-rework-section")
-                                            ?.scrollIntoView({
-                                                behavior: "smooth",
-                                                block: "start",
-                                            });
-                                    }}
-                                >
-                                    Request Rework
-                                </button>
-
-                                <button
-                                    type="button"
-                                    className="coordinator-quick-primary"
-                                    onClick={handleInternalReviewPass}
-                                    disabled={reviewingPass || reviewingFail}
-                                >
-                                    {reviewingPass
-                                        ? "Submitting..."
-                                        : "Pass Review"}
-                                </button>
-                            </>
-
-                        )}
 
                     </div>
 
@@ -1412,10 +861,11 @@ function CoordinatorRequestDetail() {
 
                                 <strong>
                                     {assignee?.fullName ||
+                                        request.currentAssigneeName ||
                                         (
                                             request.currentAssigneeId
                                                 ? `User #${request.currentAssigneeId}`
-                                                : "Not assigned"
+                                                : "Not assigned yet"
                                         )}
                                 </strong>
 
@@ -1655,10 +1105,12 @@ function CoordinatorRequestDetail() {
 
                     <RequestAttachments
                         requestId={id}
+                        title="Proof images"
+                        description="Photos IT staff uploaded before asking the employee to confirm the result."
                     />
 
 
-                    {/* =================================================
+{/* =================================================
     REQUEST HISTORY
    ================================================= */}
 
@@ -1754,23 +1206,20 @@ function CoordinatorRequestDetail() {
 
                     </section>
 
-                    {/* =================================================
-                        WORKFLOW NOTICE
-                       ================================================= */}
-
-                    <section className="coordinator-detail-card">
+                                        <section className="coordinator-detail-card">
 
                         <div className="coordinator-detail-card-header">
 
                             <div>
 
                                 <h2>
-                                    Coordination Actions
+                                    Workflow
                                 </h2>
 
                                 <p>
-                                    Actions available for the current
-                                    support request workflow.
+                                    {statusDescription(
+                                        status?.code
+                                    )}
                                 </p>
 
                             </div>
@@ -1778,633 +1227,22 @@ function CoordinatorRequestDetail() {
                         </div>
 
 
-                        {/* =============================================
-        ACTION ERROR
-       ============================================= */}
+                        <div className="coordinator-detail-grid">
 
-                        {actionError && (
+                            <div className="coordinator-detail-field">
 
-                            <div className="coordinator-action-error">
+                                <span>
+                                    Rating
+                                </span>
 
-                                <div className="coordinator-action-message-icon">
-                                    !
-                                </div>
-
-                                <div>
-
-                                    <strong>
-                                        Unable to complete action
-                                    </strong>
-
-                                    <p>
-                                        {actionError}
-                                    </p>
-
-                                </div>
+                                <strong>
+                                    {requestRating(request) ||
+                                        "Not rated yet"}
+                                </strong>
 
                             </div>
 
-                        )}
-
-
-                        {/* =============================================
-        ACTION SUCCESS
-       ============================================= */}
-
-                        {actionSuccess && (
-
-                            <div className="coordinator-action-success">
-
-                                <div className="coordinator-action-message-icon">
-                                    ✓
-                                </div>
-
-                                <div>
-
-                                    <strong>
-                                        Action completed
-                                    </strong>
-
-                                    <p>
-                                        {actionSuccess}
-                                    </p>
-
-                                </div>
-
-                            </div>
-
-                        )}
-
-
-                        {/* =============================================
-        WAITING COORDINATOR
-       ============================================= */}
-
-                        {status?.code === "WAITING_COORDINATOR" && (
-
-                            <div className="coordinator-workflow-action">
-
-                                <div className="coordinator-workflow-action-info">
-
-                                    <div className="coordinator-workflow-action-icon">
-
-                                        <svg viewBox="0 0 24 24">
-
-                                            <circle
-                                                cx="12"
-                                                cy="12"
-                                                r="9"
-                                            />
-
-                                            <path d="M8 12L11 15L16 9" />
-
-                                        </svg>
-
-                                    </div>
-
-
-                                    <div>
-
-                                        <strong>
-                                            Accept this request
-                                        </strong>
-
-                                        <p>
-                                            Confirm that you have reviewed
-                                            the request and will coordinate
-                                            the next handling steps.
-                                        </p>
-
-                                    </div>
-
-                                </div>
-
-
-                                <button
-                                    type="button"
-                                    className="coordinator-accept-button"
-                                    onClick={handleAcceptRequest}
-                                    disabled={accepting}
-                                >
-                                    {accepting
-                                        ? "Accepting..."
-                                        : "Accept Request"}
-                                </button>
-
-                            </div>
-
-                        )}
-
-
-                        {/* =============================================
-        ACCEPTED
-       ============================================= */}
-
-                        {status?.code === "ACCEPTED" && (
-                            <div className="coord-action-panel">
-
-
-
-                                {actionError && (
-                                    <div className="coord-action-message error">
-                                        {actionError}
-                                    </div>
-                                )}
-
-                                {actionSuccess && (
-                                    <div className="coord-action-message success">
-                                        {actionSuccess}
-                                    </div>
-                                )}
-
-                                <div
-                                    id="coordinator-request-info-section"
-                                    className="coord-request-info-box"
-                                >
-
-                                    <div className="coord-request-info-title">
-                                        Request More Information
-                                    </div>
-
-                                    <div className="coord-request-info-description">
-                                        Ask the requester to provide additional information
-                                        before the request can be classified.
-                                    </div>
-
-                                    <textarea
-                                        className="coord-request-info-textarea"
-                                        value={requestInfoMessage}
-                                        onChange={(e) =>
-                                            setRequestInfoMessage(e.target.value)
-                                        }
-                                        placeholder="Describe the additional information required..."
-                                        rows={4}
-                                        maxLength={2000}
-                                        disabled={requestingInfo}
-                                    />
-
-                                    <div className="coord-request-info-footer">
-
-                                        <span className="coord-character-count">
-                                            {requestInfoMessage.length}/2000
-                                        </span>
-
-                                        <button
-                                            type="button"
-                                            className="coord-request-info-button"
-                                            onClick={handleRequestMoreInformation}
-                                            disabled={
-                                                requestingInfo ||
-                                                !requestInfoMessage.trim()
-                                            }
-                                        >
-                                            {requestingInfo
-                                                ? "Sending..."
-                                                : "Request More Information"}
-                                        </button>
-
-                                    </div>
-
-                                </div>
-                                <div
-                                    id="coordinator-classify-section"
-                                    className="coord-classify-box"
-                                >
-
-                                    <div className="coord-classify-title">
-                                        Classify Request
-                                    </div>
-
-                                    <div className="coord-classify-description">
-                                        Confirm the request category and priority before transferring
-                                        the request to the appropriate IT group.
-                                    </div>
-
-
-                                    <div className="coord-classify-grid">
-
-                                        <div className="coord-classify-field">
-
-                                            <label htmlFor="classifyCategory">
-                                                Category
-                                            </label>
-
-                                            <select
-                                                id="classifyCategory"
-                                                value={classifyCategoryId}
-                                                onChange={(e) => {
-                                                    setClassifyCategoryId(
-                                                        e.target.value
-                                                    );
-
-                                                    if (actionError) {
-                                                        setActionError("");
-                                                    }
-                                                }}
-                                                disabled={classifying}
-                                            >
-                                                <option value="">
-                                                    Select category
-                                                </option>
-
-                                                {categoryList.map((item) => (
-                                                    <option
-                                                        key={item.id}
-                                                        value={item.id}
-                                                    >
-                                                        {item.name}
-                                                    </option>
-                                                ))}
-
-                                            </select>
-
-                                        </div>
-
-
-                                        <div className="coord-classify-field">
-
-                                            <label htmlFor="classifyPriority">
-                                                Priority
-                                            </label>
-
-                                            <select
-                                                id="classifyPriority"
-                                                value={classifyPriorityId}
-                                                onChange={(e) => {
-                                                    setClassifyPriorityId(
-                                                        e.target.value
-                                                    );
-
-                                                    if (actionError) {
-                                                        setActionError("");
-                                                    }
-                                                }}
-                                                disabled={classifying}
-                                            >
-                                                <option value="">
-                                                    Select priority
-                                                </option>
-
-                                                {priorityList.map((item) => (
-                                                    <option
-                                                        key={item.id}
-                                                        value={item.id}
-                                                    >
-                                                        {item.name}
-                                                    </option>
-                                                ))}
-
-                                            </select>
-
-                                        </div>
-
-                                    </div>
-
-
-                                    <div className="coord-classify-field coord-classify-note">
-
-                                        <label htmlFor="classifyNote">
-                                            Classification Note
-                                            <span>Optional</span>
-                                        </label>
-
-                                        <textarea
-                                            id="classifyNote"
-                                            value={classifyNote}
-                                            onChange={(e) =>
-                                                setClassifyNote(
-                                                    e.target.value
-                                                )
-                                            }
-                                            placeholder="Add any note related to the classification..."
-                                            rows={4}
-                                            maxLength={1000}
-                                            disabled={classifying}
-                                        />
-
-                                    </div>
-
-
-                                    <div className="coord-classify-footer">
-
-                                        <span className="coord-character-count">
-                                            {classifyNote.length}/1000
-                                        </span>
-
-                                        <button
-                                            type="button"
-                                            className="coord-classify-button"
-                                            onClick={handleClassifyRequest}
-                                            disabled={
-                                                classifying ||
-                                                !classifyCategoryId ||
-                                                !classifyPriorityId
-                                            }
-                                        >
-                                            {classifying
-                                                ? "Classifying..."
-                                                : "Classify Request"}
-                                        </button>
-
-                                    </div>
-
-                                </div>
-
-                            </div>
-                        )}
-
-
-                        {/* =============================================
-    CLASSIFIED
-   ============================================= */}
-
-                        {status?.code === "CLASSIFIED" && (
-
-                            <div
-                                id="coordinator-transfer-section"
-                                className="coord-transfer-box"
-                            >
-
-                                <div className="coord-transfer-title">
-                                    Transfer to IT Group
-                                </div>
-
-                                <div className="coord-transfer-description">
-                                    Select the IT group responsible for handling this support request.
-                                </div>
-
-
-                                <div className="coord-transfer-field">
-
-                                    <label htmlFor="transferITGroup">
-                                        IT Group
-                                    </label>
-
-                                    <select
-                                        id="transferITGroup"
-                                        value={selectedITGroupId}
-                                        onChange={(e) => {
-                                            setSelectedITGroupId(
-                                                e.target.value
-                                            );
-
-                                            if (actionError) {
-                                                setActionError("");
-                                            }
-                                        }}
-                                        disabled={transferringITGroup}
-                                    >
-                                        <option value="">
-                                            Select IT group
-                                        </option>
-
-                                        {itGroupList.map((item) => (
-                                            <option
-                                                key={item.id}
-                                                value={item.id}
-                                            >
-                                                {item.name}
-                                            </option>
-                                        ))}
-
-                                    </select>
-
-                                </div>
-
-
-                                <div className="coord-transfer-field coord-transfer-note">
-
-                                    <label htmlFor="transferNote">
-                                        Transfer Note
-                                        <span>Optional</span>
-                                    </label>
-
-                                    <textarea
-                                        id="transferNote"
-                                        value={transferNote}
-                                        onChange={(e) =>
-                                            setTransferNote(
-                                                e.target.value
-                                            )
-                                        }
-                                        placeholder="Add any note for the IT group..."
-                                        rows={4}
-                                        maxLength={1000}
-                                        disabled={transferringITGroup}
-                                    />
-
-                                </div>
-
-
-                                <div className="coord-transfer-footer">
-
-                                    <span className="coord-character-count">
-                                        {transferNote.length}/1000
-                                    </span>
-
-                                    <button
-                                        type="button"
-                                        className="coord-transfer-button"
-                                        onClick={handleTransferToITGroup}
-                                        disabled={
-                                            transferringITGroup ||
-                                            !selectedITGroupId
-                                        }
-                                    >
-                                        {transferringITGroup
-                                            ? "Transferring..."
-                                            : "Transfer to IT Group"}
-                                    </button>
-
-                                </div>
-
-                            </div>
-
-                        )}
-
-                        {/* =============================================
-                            WAITING INTERNAL REVIEW
-                           ============================================= */}
-
-                        {status?.code === "WAITING_INTERNAL_REVIEW" && (
-
-                            <div className="coordinator-review-actions">
-
-                                {/* PASS REVIEW */}
-
-                                <div className="coordinator-workflow-action">
-
-                                    <div className="coordinator-workflow-action-info">
-
-                                        <div className="coordinator-workflow-action-icon">
-
-                                            <svg viewBox="0 0 24 24">
-                                                <circle
-                                                    cx="12"
-                                                    cy="12"
-                                                    r="9"
-                                                />
-                                                <path d="M8 12L11 15L16 9" />
-                                            </svg>
-
-                                        </div>
-
-                                        <div>
-
-                                            <strong>
-                                                Internal Review
-                                            </strong>
-
-                                            <p>
-                                                Review the IT staff handling result.
-                                                If the result is acceptable, submit the
-                                                request to the requester for confirmation.
-                                            </p>
-
-                                        </div>
-
-                                    </div>
-
-                                    <button
-                                        type="button"
-                                        className="coordinator-accept-button"
-                                        onClick={handleInternalReviewPass}
-                                        disabled={
-                                            reviewingPass ||
-                                            reviewingFail
-                                        }
-                                    >
-                                        {reviewingPass
-                                            ? "Submitting..."
-                                            : "Pass Review"}
-                                    </button>
-
-                                </div>
-
-
-                                {/* REQUEST REWORK */}
-
-                                <div
-                                    id="coordinator-rework-section"
-                                    className="coordinator-rework-action"
-                                >
-
-                                    <div className="coordinator-rework-header">
-
-                                        <strong>
-                                            Request Rework
-                                        </strong>
-
-                                        <p>
-                                            Return the request to IT staff when additional
-                                            work or correction is required.
-                                        </p>
-
-                                    </div>
-
-
-                                    <label
-                                        className="coordinator-rework-label"
-                                        htmlFor="reworkReason"
-                                    >
-                                        Rework Reason
-                                        <span> *</span>
-                                    </label>
-
-
-                                    <textarea
-                                        id="reworkReason"
-                                        className="coordinator-rework-textarea"
-                                        value={reworkReason}
-                                        onChange={(e) =>
-                                            setReworkReason(
-                                                e.target.value
-                                            )
-                                        }
-                                        rows={4}
-                                        maxLength={2000}
-                                        placeholder="Describe what needs to be corrected or completed before resubmission..."
-                                        disabled={
-                                            reviewingPass ||
-                                            reviewingFail
-                                        }
-                                    />
-
-
-                                    <div className="coordinator-rework-footer">
-
-                                        <span>
-                                            {reworkReason.length}/2000
-                                        </span>
-
-                                        <button
-                                            type="button"
-                                            className="coordinator-rework-button"
-                                            onClick={handleInternalReviewFail}
-                                            disabled={
-                                                reviewingPass ||
-                                                reviewingFail ||
-                                                !reworkReason.trim()
-                                            }
-                                        >
-                                            {reviewingFail
-                                                ? "Sending..."
-                                                : "Request Rework"}
-                                        </button>
-
-                                    </div>
-
-                                </div>
-
-                            </div>
-
-                        )}
-
-                        {/* =============================================
-                            OTHER STATUS
-                           ============================================= */}
-
-                        {status?.code !== "WAITING_COORDINATOR" &&
-                            status?.code !== "ACCEPTED" &&
-                            status?.code !== "CLASSIFIED" &&
-                            status?.code !== "WAITING_INTERNAL_REVIEW" && (
-
-                                <div className="coordinator-detail-action-placeholder">
-
-                                    <div className="coordinator-detail-action-placeholder-icon">
-
-                                        <svg viewBox="0 0 24 24">
-
-                                            <circle
-                                                cx="12"
-                                                cy="12"
-                                                r="9"
-                                            />
-
-                                            <path d="M12 8V12" />
-                                            <path d="M12 16H12.01" />
-
-                                        </svg>
-
-                                    </div>
-
-
-                                    <div>
-
-                                        <strong>
-                                            No coordinator action available
-                                        </strong>
-
-                                        <p>
-                                            Available actions depend on the
-                                            current request status.
-                                        </p>
-
-                                    </div>
-
-                                </div>
-
-                            )}
+                        </div>
 
                     </section>
 

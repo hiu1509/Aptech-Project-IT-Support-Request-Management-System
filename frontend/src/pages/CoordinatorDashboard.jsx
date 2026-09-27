@@ -11,6 +11,11 @@ import {
 
 import "../css/CoordinatorDashboard.css";
 
+import {
+    normalizeStatusCode,
+    statusLabel,
+} from "../utils/requestStatus";
+
 
 function CoordinatorDashboard() {
     const navigate = useNavigate();
@@ -113,14 +118,11 @@ function CoordinatorDashboard() {
                 request?.statusId
             );
 
-        return (
+        return normalizeStatusCode(
             matchedStatus?.code ||
             request?.statusCode ||
             ""
-        )
-            .trim()
-            .toUpperCase()
-            .replace(/\s+/g, "_");
+        );
     };
 
 
@@ -130,7 +132,8 @@ function CoordinatorDashboard() {
                 request?.statusId
             );
 
-        return (
+        return statusLabel(
+            getStatusCode(request),
             matchedStatus?.name ||
             request?.statusName ||
             "Unknown"
@@ -151,53 +154,32 @@ function CoordinatorDashboard() {
 
             const waitingReview =
                 requests.filter(
-                    (request) => {
-
-                        const code =
-                            getStatusCode(
-                                request
-                            );
-
-                        return (
-                            code ===
-                            "WAITING_COORDINATOR" ||
-                            code ===
-                            "NEW"
-                        );
-                    }
+                    (request) =>
+                        getStatusCode(request) === "NEW"
                 ).length;
 
 
             const needInformation =
                 requests.filter(
-                    (request) =>
-                        getStatusCode(
-                            request
-                        ) ===
-                        "NEED_INFO"
+                    (request) => {
+
+                        const code =
+                            getStatusCode(request);
+
+                        return [
+                            "ASSIGNED",
+                            "IN_PROGRESS",
+                            "REWORK",
+                        ].includes(code);
+                    }
                 ).length;
 
 
             const transferred =
                 requests.filter(
-                    (request) => {
-
-                        const code =
-                            getStatusCode(
-                                request
-                            );
-
-                        return [
-                            "CLASSIFIED",
-                            "WAITING_IT_ASSIGNMENT",
-                            "ASSIGNED",
-                            "IN_PROGRESS",
-                            "WAITING_INTERNAL_REVIEW",
-                            "WAITING_USER_CONFIRMATION",
-                            "REWORK",
-                            "COMPLETED",
-                        ].includes(code);
-                    }
+                    (request) =>
+                        getStatusCode(request) ===
+                        "WAITING_CONFIRMATION"
                 ).length;
 
 
@@ -388,7 +370,7 @@ function CoordinatorDashboard() {
                         <div className="coordinator-stat-card">
 
                             <div className="coordinator-stat-card-label">
-                                Waiting Review
+                                New
                             </div>
 
                             <strong>
@@ -398,7 +380,7 @@ function CoordinatorDashboard() {
                             </strong>
 
                             <small>
-                                Requests waiting for coordinator review
+                                Requests waiting for automatic assignment
                             </small>
 
                         </div>
@@ -407,7 +389,7 @@ function CoordinatorDashboard() {
                         <div className="coordinator-stat-card">
 
                             <div className="coordinator-stat-card-label">
-                                Need Information
+                                In Progress
                             </div>
 
                             <strong>
@@ -417,7 +399,7 @@ function CoordinatorDashboard() {
                             </strong>
 
                             <small>
-                                Requests waiting for more information
+                                Assigned, in progress, or returned for rework
                             </small>
 
                         </div>
@@ -426,7 +408,7 @@ function CoordinatorDashboard() {
                         <div className="coordinator-stat-card">
 
                             <div className="coordinator-stat-card-label">
-                                Transferred to IT
+                                Waiting Confirmation
                             </div>
 
                             <strong>
@@ -436,7 +418,7 @@ function CoordinatorDashboard() {
                             </strong>
 
                             <small>
-                                Requests already moved to IT handling
+                                Waiting for the employee to confirm the result
                             </small>
 
                         </div>

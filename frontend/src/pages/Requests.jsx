@@ -21,6 +21,12 @@ import {
     getUserById,
 } from "../services/userService";
 
+import {
+    WORKFLOW_STATUSES,
+    normalizeStatusCode,
+    statusLabel,
+} from "../utils/requestStatus";
+
 import "../css/Requests.css";
 
 
@@ -327,7 +333,8 @@ function Requests() {
 
             const matchesStatus =
                 statusFilter === "ALL" ||
-                status?.code === statusFilter;
+                normalizeStatusCode(status?.code) ===
+                    statusFilter;
 
 
             const matchesPriority =
@@ -372,22 +379,19 @@ function Requests() {
     // =========================================================
 
     const getStatusClass = (statusCode) => {
-        switch (statusCode) {
+        switch (normalizeStatusCode(statusCode)) {
 
             case "NEW":
-            case "WAITING_COORDINATOR":
                 return "new";
-
 
             case "COMPLETED":
                 return "completed";
 
-
-            case "NEED_INFO":
-            case "WAITING_INTERNAL_REVIEW":
-            case "WAITING_USER_CONFIRMATION":
+            case "WAITING_CONFIRMATION":
                 return "review";
 
+            case "REWORK":
+                return "progress";
 
             default:
                 return "progress";
@@ -515,14 +519,14 @@ function Requests() {
                             </option>
 
 
-                            {statuses.map(
+                            {WORKFLOW_STATUSES.map(
                                 (status) => (
 
                                     <option
-                                        key={status.id}
+                                        key={status.code}
                                         value={status.code}
                                     >
-                                        {status.name}
+                                        {status.label}
                                     </option>
 
                                 )
@@ -796,7 +800,10 @@ function Requests() {
                                                                     )}`}
                                                                 >
                                                                     {
-                                                                        status.name
+                                                                        statusLabel(
+                                                                            status.code,
+                                                                            status.name
+                                                                        )
                                                                     }
                                                                 </span>
 

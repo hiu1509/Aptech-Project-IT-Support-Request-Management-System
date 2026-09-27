@@ -22,6 +22,11 @@ import {
 
 import "../css/Dashboard.css";
 
+import {
+    normalizeStatusCode,
+    statusLabel,
+} from "../utils/requestStatus";
+
 
 function Dashboard() {
 
@@ -357,7 +362,7 @@ function Dashboard() {
                 );
 
 
-            return normalizeCode(
+            return normalizeStatusCode(
                 status?.code ||
                 request.statusCode ||
                 request.statusName
@@ -375,11 +380,11 @@ function Dashboard() {
                 );
 
 
-            return (
-                status?.name ||
+            return statusLabel(
                 status?.code ||
+                request.statusCode,
+                status?.name ||
                 request.statusName ||
-                request.statusCode ||
                 "Unknown"
             );
 
@@ -552,20 +557,21 @@ function Dashboard() {
         (statusCode) => {
 
             switch (
-            normalizeCode(
+            normalizeStatusCode(
                 statusCode
             )
             ) {
 
                 case "COMPLETED":
-                case "CLOSED":
                     return "completed";
 
 
                 case "NEW":
-                case "WAITING_COORDINATOR":
-                case "WAITING_IT_ASSIGNMENT":
                     return "new";
+
+
+                case "WAITING_CONFIRMATION":
+                    return "progress";
 
 
                 default:
@@ -597,11 +603,7 @@ function Dashboard() {
                             );
 
 
-                        return [
-                            "NEW",
-                            "WAITING_COORDINATOR",
-                            "WAITING_IT_ASSIGNMENT",
-                        ].includes(code);
+                        return code === "NEW";
 
                     }
                 ).length;
@@ -617,10 +619,7 @@ function Dashboard() {
                             );
 
 
-                        return [
-                            "COMPLETED",
-                            "CLOSED",
-                        ].includes(code);
+                        return code === "COMPLETED";
 
                     }
                 ).length;
@@ -636,14 +635,11 @@ function Dashboard() {
                             );
 
 
-                        return ![
-                            "NEW",
-                            "WAITING_COORDINATOR",
-                            "WAITING_IT_ASSIGNMENT",
-                            "COMPLETED",
-                            "CLOSED",
-                            "CANCELLED",
-                            "REJECTED",
+                        return [
+                            "ASSIGNED",
+                            "IN_PROGRESS",
+                            "WAITING_CONFIRMATION",
+                            "REWORK",
                         ].includes(code);
 
                     }
@@ -671,7 +667,7 @@ function Dashboard() {
                         newRequests,
 
                     description:
-                        "Waiting for coordination or assignment",
+                        "Waiting for automatic assignment",
                 },
 
                 {
@@ -682,7 +678,7 @@ function Dashboard() {
                         inProgress,
 
                     description:
-                        "Currently being handled",
+                        "Assigned, in progress, waiting confirmation, or rework",
                 },
 
                 {
