@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { login } from "../services/authService";
 import "../css/Login.css";
@@ -11,6 +11,16 @@ function Login() {
     const [message, setMessage] = useState("");
     const [isError, setIsError] = useState(false);
     const [loading, setLoading] = useState(false);
+
+    const currentUser = useMemo(() => {
+        try {
+            return JSON.parse(localStorage.getItem("user") || "null");
+        } catch {
+            return null;
+        }
+    }, []);
+
+    const currentToken = localStorage.getItem("token");
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -193,6 +203,24 @@ function Login() {
                                 Welcome back to the IT Support Management System
                             </p>
                         </div>
+
+                        {currentToken && currentUser && (
+                            <div className="login-session">
+                                <p>
+                                    You are signed in as{" "}
+                                    <strong>
+                                        {currentUser.fullName || currentUser.email}
+                                    </strong>
+                                    . Sign in below to switch accounts.
+                                </p>
+                                <button
+                                    type="button"
+                                    onClick={() => navigate("/")}
+                                >
+                                    Continue current session
+                                </button>
+                            </div>
+                        )}
 
 
                         <form onSubmit={handleSubmit}>

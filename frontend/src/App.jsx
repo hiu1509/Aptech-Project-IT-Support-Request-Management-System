@@ -143,18 +143,7 @@ function App() {
 
             <Route
                 path="/login"
-                element={
-                    token
-                        ? (
-                            <Navigate
-                                to={getHomeRoute()}
-                                replace
-                            />
-                        )
-                        : (
-                            <Login />
-                        )
-                }
+                element={<Login />}
             />
 
             <Route
