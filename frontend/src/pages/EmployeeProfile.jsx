@@ -6,6 +6,7 @@ import {
 } from "react";
 
 import EmployeeSidebar from "../components/EmployeeSidebar";
+import CoordinatorSidebar from "../components/CoordinatorSidebar";
 
 import {
     getUserById,
@@ -19,7 +20,7 @@ import {
 import "../css/EmployeeProfile.css";
 
 
-function EmployeeProfile() {
+function EmployeeProfile({ variant = "employee" }) {
 
     const storedUser =
         JSON.parse(
@@ -539,7 +540,9 @@ function EmployeeProfile() {
 
         <div className="employee-profile-layout">
 
-            <EmployeeSidebar />
+            {variant === "coordinator"
+                ? <CoordinatorSidebar />
+                : <EmployeeSidebar />}
 
 
             <main className="employee-profile-main">

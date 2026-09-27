@@ -482,6 +482,20 @@ function App() {
                 }
             />
 
+            <Route
+                path="/coordinator/profile"
+                element={
+                    token && isCoordinator
+                        ? <EmployeeProfile variant="coordinator" />
+                        : (
+                            <Navigate
+                                to={getHomeRoute()}
+                                replace
+                            />
+                        )
+                }
+            />
+
             {/* ======================================
                 IT TEAM LEADER ROUTES
                ====================================== */}
