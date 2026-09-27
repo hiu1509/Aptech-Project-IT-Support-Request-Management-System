@@ -1,7 +1,9 @@
 .requests-layout {
     min-height: 100vh;
     display: flex;
-    background: #f5f7fb;
+    background:
+        radial-gradient(1200px 400px at 100% -10%, rgba(47, 111, 237, 0.06), transparent 60%),
+        #f4f6fb;
 }
 
 .requests-main {
@@ -34,18 +36,22 @@
 
 .new-request-button {
     height: 42px;
-    padding: 0 18px;
+    padding: 0 20px;
     border: none;
-    border-radius: 8px;
-    background: #2f6fed;
+    border-radius: 10px;
+    background: linear-gradient(180deg, #3a78f2 0%, #2f6fed 100%);
     color: #ffffff;
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
+    box-shadow: 0 6px 16px rgba(47, 111, 237, 0.25);
+    transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
 }
 
     .new-request-button:hover {
-        background: #245ed0;
+        background: linear-gradient(180deg, #2f6fed 0%, #245ed0 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 10px 22px rgba(47, 111, 237, 0.3);
     }
 
 .requests-toolbar {
@@ -86,8 +92,9 @@
 .requests-table-card {
     overflow: hidden;
     background: #ffffff;
-    border: 1px solid #e5eaf1;
-    border-radius: 11px;
+    border: 1px solid #e9edf3;
+    border-radius: 14px;
+    box-shadow: 0 6px 20px rgba(16, 24, 40, 0.05);
 }
 
 .requests-table {
@@ -104,17 +111,24 @@
     }
 
     .requests-table th {
-        background: #fafbfc;
+        background: #f8fafc;
         color: #667085;
         font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        font-size: 11px;
     }
 
     .requests-table td {
         color: #344054;
     }
 
+    .requests-table tbody tr {
+        transition: background-color 0.14s ease;
+    }
+
     .requests-table tbody tr:hover {
-        background: #fafcff;
+        background: #f7f9fe;
     }
 
 .request-id {

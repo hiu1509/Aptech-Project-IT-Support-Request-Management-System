@@ -1,8 +1,14 @@
 .app-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
     height: 76px;
     padding: 0 28px;
-    background: #ffffff;
-    border-bottom: 1px solid #e5eaf1;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: saturate(1.4) blur(8px);
+    -webkit-backdrop-filter: saturate(1.4) blur(8px);
+    border-bottom: 1px solid #e9edf3;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -29,15 +35,16 @@
 }
 
 .header-user-avatar {
-    width: 38px;
-    height: 38px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
-    background: #eaf2fb;
-    color: #1f4f86;
+    background: linear-gradient(135deg, #3a78f2, #6aa0ff);
+    color: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 700;
+    box-shadow: 0 4px 12px rgba(47, 111, 237, 0.28);
 }
 
 .header-user-name {

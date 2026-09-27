@@ -1,3 +1,23 @@
+:root {
+    --brand: #2f6fed;
+    --brand-dark: #245ed0;
+    --ink: #172033;
+    --muted: #667085;
+    --line: #e5eaf1;
+    --surface: #ffffff;
+    --bg: #f4f6fb;
+
+    --success: #15803d;
+    --warning: #b54708;
+    --danger: #b42318;
+
+    --radius: 14px;
+    --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.05);
+    --shadow-md: 0 6px 20px rgba(16, 24, 40, 0.06);
+    --shadow-lg: 0 14px 34px rgba(16, 24, 40, 0.10);
+    --ring: 0 0 0 3px rgba(47, 111, 237, 0.16);
+}
+
 * {
     box-sizing: border-box;
 }
@@ -14,6 +34,47 @@ body,
 html {
     font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     background: #f5f7fb;
+}
+
+::selection {
+    background: rgba(47, 111, 237, 0.18);
+    color: #0f2a52;
+}
+
+/* Nicer, thinner scrollbars across the app */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+}
+
+*::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+*::-webkit-scrollbar-thumb {
+    background: #cdd5e0;
+    border: 3px solid transparent;
+    background-clip: content-box;
+    border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    background: #b3bdcc;
+    background-clip: content-box;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    @keyframes fadeSlideIn {
+        from {
+            opacity: 0;
+            transform: translateY(6px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
 }
 
 body {

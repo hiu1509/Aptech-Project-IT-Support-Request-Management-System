@@ -1,0 +1,106 @@
+/* =========================================================
+   GLOBAL THEME LAYER
+   ---------------------------------------------------------
+   Nang cap giao dien tren toan bo app cho hien dai va bot
+   don dieu. Import SAU cung trong App.jsx va dung selector
+   co tien to "body" de luon thang cac rule cung do uu tien
+   cua tung trang, khong can sua tung file rieng le.
+   ========================================================= */
+
+
+/* ---------------------------------------------------------
+   NEN TRANG: gradient thuong hieu nhe o goc tren phai
+   (ap dung cho moi layout dang *-layout)
+   --------------------------------------------------------- */
+body [class$="-layout"] {
+    background:
+        radial-gradient(1100px 380px at 100% -10%, rgba(47, 111, 237, 0.06), transparent 60%),
+        #f4f6fb;
+}
+
+
+/* ---------------------------------------------------------
+   CARD: bo goc lon hon + do bong mem cho cac the noi dung
+   --------------------------------------------------------- */
+body [class$="stat-card"],
+body [class$="summary-card"],
+body [class$="-info-card"],
+body [class$="-welcome-card"],
+body [class$="-team-card"],
+body [class$="-detail-card"],
+body [class$="-dashboard-card"],
+body [class$="workflow-card"],
+body [class$="-requests-card"],
+body [class$="table-card"],
+body [class$="role-card"],
+body [class$="profile-card"],
+body [class$="-request-card"],
+body [class$="myrequests-card"],
+body [class$="recent-card"],
+body [class$="module-card"],
+body .statistics-card,
+body .users-card,
+body .reports-card {
+    border-radius: 14px;
+    box-shadow: 0 6px 20px rgba(16, 24, 40, 0.05);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+
+/* ---------------------------------------------------------
+   STAT / SUMMARY CARD: thanh accent mau + hieu ung nhac len
+   --------------------------------------------------------- */
+body [class$="stat-card"],
+body [class$="summary-card"],
+body .statistics-card {
+    position: relative;
+    overflow: hidden;
+}
+
+body [class$="stat-card"]::before,
+body [class$="summary-card"]::before,
+body .statistics-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 4px;
+    background: linear-gradient(90deg, #3a78f2, #6aa0ff);
+    z-index: 1;
+}
+
+body [class$="stat-card"]:hover,
+body [class$="summary-card"]:hover,
+body .statistics-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 30px rgba(16, 24, 40, 0.1);
+}
+
+
+/* ---------------------------------------------------------
+   BANG: header IN HOA + hang doi nen khi hover (toan app)
+   --------------------------------------------------------- */
+body table th {
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+body table tbody tr {
+    transition: background-color 0.14s ease;
+}
+
+body table tbody tr:hover {
+    background: #f7f9fe;
+}
+
+
+/* ---------------------------------------------------------
+   FOCUS RING: nhat quan, hien dai cho input/nut/select
+   --------------------------------------------------------- */
+body button:focus-visible,
+body a:focus-visible,
+body input:focus-visible,
+body select:focus-visible,
+body textarea:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(47, 111, 237, 0.18);
+}
