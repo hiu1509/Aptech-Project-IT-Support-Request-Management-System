@@ -104,6 +104,12 @@ builder.Services.AddScoped<IRequestAttachmentService, RequestAttachmentService>(
 builder.Services.AddScoped<IRequestHistoryService, RequestHistoryService>();
 builder.Services.AddScoped<IEmailNotificationService, EmailNotificationService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IFileService, FileService>();
+builder.Services.AddScoped<IReportService, ReportService>();
+builder.Services.AddScoped<IQrCodeService, QrCodeService>();
+builder.Services.AddScoped<ITicketPdfService, TicketPdfService>();
+
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 
 
 // =========================================================
