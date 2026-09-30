@@ -2,25 +2,24 @@ import 'package:flutter/material.dart';
 
 import '../models/request_model.dart';
 import '../services/api_service.dart';
+import 'request_detail_screen.dart';
 
 class RequestListScreen extends StatefulWidget {
   const RequestListScreen({super.key});
-
   @override
-  State<RequestListScreen> createState() =>
-      _RequestListScreenState();
+  State<RequestListScreen> createState() => _RequestListScreenState();
 }
 
-class _RequestListScreenState
-    extends State<RequestListScreen> {
+class _RequestListScreenState extends State<RequestListScreen> {
   bool _isLoading = true;
+
   String? _errorMessage;
 
   List<RequestModel> _requests = [];
+
   String _selectedFilter = 'ALL';
 
-  final TextEditingController _searchController =
-      TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -38,22 +37,25 @@ class _RequestListScreenState
   @override
   void dispose() {
     _searchController.dispose();
+
     super.dispose();
   }
 
   // ============================================================
+
   // LOAD DATA
+
   // ============================================================
 
   Future<void> _loadRequests() async {
     setState(() {
       _isLoading = true;
+
       _errorMessage = null;
     });
 
     try {
-      final requests =
-          await ApiService.getAssignedRequests();
+      final requests = await ApiService.getAssignedRequests();
 
       if (!mounted) return;
 
@@ -82,16 +84,25 @@ class _RequestListScreenState
   }
 
   // ============================================================
+
   // SORT
+
   // ============================================================
 
   /// Thứ tự ưu tiên hiển thị công việc:
+
   ///
+
   /// 0 - ASSIGNED: Đã giao
+
   /// 1 - REWORK: Cần làm lại
+
   /// 2 - IN_PROGRESS: Đang xử lý
+
   /// 3 - WAITING_CONFIRMATION: Chờ xác nhận
+
   /// 4 - COMPLETED: Hoàn thành
+
   int _getStatusSortPriority(String? statusCode) {
     switch (statusCode?.toUpperCase()) {
       case 'ASSIGNED':
@@ -103,6 +114,7 @@ class _RequestListScreenState
       case 'IN_PROGRESS':
         return 2;
 
+      case 'WAITING_USER_CONFIRMATION':
       case 'WAITING_CONFIRMATION':
         return 3;
 
@@ -115,62 +127,61 @@ class _RequestListScreenState
   }
 
   // ============================================================
+
   // FILTER + SEARCH + SORT
+
   // ============================================================
 
   List<RequestModel> get _filteredRequests {
-    final keyword =
-        _searchController.text.trim().toLowerCase();
+    final keyword = _searchController.text.trim().toLowerCase();
 
     final result = _requests.where((request) {
       final matchesSearch =
           keyword.isEmpty ||
-          request.requestCode
-              .toLowerCase()
-              .contains(keyword) ||
-          request.title
-              .toLowerCase()
-              .contains(keyword) ||
-          request.description
-              .toLowerCase()
-              .contains(keyword) ||
-          (request.requesterName ?? '')
-              .toLowerCase()
-              .contains(keyword) ||
-          (request.categoryName ?? '')
-              .toLowerCase()
-              .contains(keyword);
+          request.requestCode.toLowerCase().contains(keyword) ||
+          request.title.toLowerCase().contains(keyword) ||
+          request.description.toLowerCase().contains(keyword) ||
+          (request.requesterName ?? '').toLowerCase().contains(keyword) ||
+          (request.categoryName ?? '').toLowerCase().contains(keyword);
 
-      final status =
-          request.statusCode?.toUpperCase() ?? '';
+      final status = request.statusCode?.toUpperCase() ?? '';
 
       final matchesStatus =
-          _selectedFilter == 'ALL' ||
-          status == _selectedFilter;
+          _selectedFilter == 'ALL' || status == _selectedFilter;
 
       return matchesSearch && matchesStatus;
     }).toList();
 
     // ==========================================================
+
     // SẮP XẾP
+
     // ==========================================================
+
     //
+
     // 1. Đã giao
+
     // 2. Cần làm lại
+
     // 3. Đang xử lý
+
     // 4. Chờ xác nhận
+
     // 5. Hoàn thành
+
     //
+
     // Trong cùng một nhóm:
+
     // ngày tạo mới nhất lên trên.
+
     // ==========================================================
 
     result.sort((a, b) {
-      final priorityA =
-          _getStatusSortPriority(a.statusCode);
+      final priorityA = _getStatusSortPriority(a.statusCode);
 
-      final priorityB =
-          _getStatusSortPriority(b.statusCode);
+      final priorityB = _getStatusSortPriority(b.statusCode);
 
       if (priorityA != priorityB) {
         return priorityA.compareTo(priorityB);
@@ -184,13 +195,14 @@ class _RequestListScreenState
 
   int _countStatus(String status) {
     return _requests.where((request) {
-      return request.statusCode?.toUpperCase() ==
-          status.toUpperCase();
+      return request.statusCode?.toUpperCase() == status.toUpperCase();
     }).length;
   }
 
   // ============================================================
+
   // FORMAT
+
   // ============================================================
 
   String _formatDate(DateTime? date) {
@@ -200,11 +212,9 @@ class _RequestListScreenState
 
     final localDate = date.toLocal();
 
-    final day =
-        localDate.day.toString().padLeft(2, '0');
+    final day = localDate.day.toString().padLeft(2, '0');
 
-    final month =
-        localDate.month.toString().padLeft(2, '0');
+    final month = localDate.month.toString().padLeft(2, '0');
 
     return '$day/$month/${localDate.year}';
   }
@@ -223,6 +233,7 @@ class _RequestListScreenState
       case 'REWORK':
         return 'Cần làm lại';
 
+      case 'WAITING_USER_CONFIRMATION':
       case 'WAITING_CONFIRMATION':
         return 'Chờ xác nhận';
 
@@ -245,6 +256,7 @@ class _RequestListScreenState
       case 'REWORK':
         return Colors.red.shade700;
 
+      case 'WAITING_USER_CONFIRMATION':
       case 'WAITING_CONFIRMATION':
         return Colors.deepPurple.shade600;
 
@@ -259,9 +271,7 @@ class _RequestListScreenState
     }
   }
 
-  Color _getStatusBackground(
-    String? statusCode,
-  ) {
+  Color _getStatusBackground(String? statusCode) {
     switch (statusCode?.toUpperCase()) {
       case 'ASSIGNED':
         return Colors.orange.shade50;
@@ -272,6 +282,7 @@ class _RequestListScreenState
       case 'REWORK':
         return Colors.red.shade50;
 
+      case 'WAITING_USER_CONFIRMATION':
       case 'WAITING_CONFIRMATION':
         return Colors.deepPurple.shade50;
 
@@ -286,9 +297,7 @@ class _RequestListScreenState
     }
   }
 
-  String _getPriorityLabel(
-    String? priorityName,
-  ) {
+  String _getPriorityLabel(String? priorityName) {
     switch (priorityName?.trim().toLowerCase()) {
       case 'high':
         return 'Cao';
@@ -307,9 +316,7 @@ class _RequestListScreenState
     }
   }
 
-  Color _getPriorityColor(
-    String? priorityName,
-  ) {
+  Color _getPriorityColor(String? priorityName) {
     switch (priorityName?.trim().toLowerCase()) {
       case 'critical':
         return Colors.red.shade800;
@@ -329,43 +336,43 @@ class _RequestListScreenState
   }
 
   // ============================================================
+
   // HEADER
+
   // ============================================================
 
   Widget _buildHeader() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(
-        20,
-        18,
-        20,
-        18,
-      ),
+
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(
-          bottom: BorderSide(
-            color: Color(0xFFE9EDF3),
-          ),
-        ),
+
+        border: Border(bottom: BorderSide(color: Color(0xFFE9EDF3))),
       ),
+
       child: Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
+
         children: [
           Row(
             children: [
               Container(
                 width: 44,
+
                 height: 44,
+
                 decoration: BoxDecoration(
-                  color:
-                      const Color(0xFFEAF2FF),
-                  borderRadius:
-                      BorderRadius.circular(12),
+                  color: const Color(0xFFEAF2FF),
+
+                  borderRadius: BorderRadius.circular(12),
                 ),
+
                 child: const Icon(
                   Icons.assignment_outlined,
+
                   color: Color(0xFF2563EB),
                 ),
               ),
@@ -374,27 +381,27 @@ class _RequestListScreenState
 
               const Expanded(
                 child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+
                   children: [
                     Text(
                       'Công việc của tôi',
+
                       style: TextStyle(
                         fontSize: 22,
-                        fontWeight:
-                            FontWeight.w700,
-                        color:
-                            Color(0xFF172033),
+
+                        fontWeight: FontWeight.w700,
+
+                        color: Color(0xFF172033),
                       ),
                     ),
+
                     SizedBox(height: 3),
+
                     Text(
                       'Theo dõi và xử lý yêu cầu hỗ trợ',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color:
-                            Color(0xFF6B7280),
-                      ),
+
+                      style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
                     ),
                   ],
                 ),
@@ -402,13 +409,10 @@ class _RequestListScreenState
 
               IconButton(
                 tooltip: 'Làm mới',
-                onPressed:
-                    _isLoading
-                        ? null
-                        : _loadRequests,
-                icon: const Icon(
-                  Icons.refresh_rounded,
-                ),
+
+                onPressed: _isLoading ? null : _loadRequests,
+
+                icon: const Icon(Icons.refresh_rounded),
               ),
             ],
           ),
@@ -417,57 +421,48 @@ class _RequestListScreenState
 
           TextField(
             controller: _searchController,
+
             decoration: InputDecoration(
-              hintText:
-                  'Tìm mã yêu cầu, tiêu đề...',
-              hintStyle: const TextStyle(
-                color: Color(0xFF9CA3AF),
-              ),
-              prefixIcon: const Icon(
-                Icons.search_rounded,
-              ),
-              suffixIcon:
-                  _searchController
-                      .text
-                      .isNotEmpty
+              hintText: 'Tìm mã yêu cầu, tiêu đề...',
+
+              hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
+
+              prefixIcon: const Icon(Icons.search_rounded),
+
+              suffixIcon: _searchController.text.isNotEmpty
                   ? IconButton(
                       onPressed: () {
-                        _searchController
-                            .clear();
+                        _searchController.clear();
                       },
-                      icon: const Icon(
-                        Icons.close_rounded,
-                      ),
+
+                      icon: const Icon(Icons.close_rounded),
                     )
                   : null,
+
               filled: true,
-              fillColor:
-                  const Color(0xFFF7F9FC),
-              contentPadding:
-                  const EdgeInsets.symmetric(
-                    vertical: 14,
-                  ),
+
+              fillColor: const Color(0xFFF7F9FC),
+
+              contentPadding: const EdgeInsets.symmetric(vertical: 14),
+
               border: OutlineInputBorder(
-                borderRadius:
-                    BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(14),
+
                 borderSide: BorderSide.none,
               ),
-              enabledBorder:
-                  OutlineInputBorder(
-                borderRadius:
-                    BorderRadius.circular(14),
-                borderSide:
-                    const BorderSide(
-                  color: Color(0xFFE5E7EB),
-                ),
+
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+
+                borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
               ),
-              focusedBorder:
-                  OutlineInputBorder(
-                borderRadius:
-                    BorderRadius.circular(14),
-                borderSide:
-                    const BorderSide(
+
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+
+                borderSide: const BorderSide(
                   color: Color(0xFF2563EB),
+
                   width: 1.5,
                 ),
               ),
@@ -479,103 +474,149 @@ class _RequestListScreenState
   }
 
   // ============================================================
+
   // FILTER CHIPS
+
   // ============================================================
 
-  Widget _buildFilterChip({
+  Widget _buildStatusFilter({
     required String value,
     required String label,
     required int count,
+    required IconData icon,
   }) {
-    final selected =
-        _selectedFilter == value;
+    final selected = _selectedFilter == value;
 
-    return Padding(
-      padding:
-          const EdgeInsets.only(right: 8),
-      child: ChoiceChip(
-        selected: selected,
-        onSelected: (_) {
-          setState(() {
-            _selectedFilter = value;
-          });
-        },
-        showCheckmark: false,
-        label: Text(
-          '$label  $count',
-        ),
-        labelStyle: TextStyle(
-          fontSize: 13,
-          fontWeight: selected
-              ? FontWeight.w700
-              : FontWeight.w500,
-          color: selected
-              ? Colors.white
-              : const Color(0xFF4B5563),
-        ),
-        selectedColor:
-            const Color(0xFF2563EB),
-        backgroundColor: Colors.white,
-        side: BorderSide(
-          color: selected
-              ? const Color(0xFF2563EB)
-              : const Color(0xFFE1E5EB),
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius:
-              BorderRadius.circular(20),
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.all(4),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () {
+            setState(() {
+              _selectedFilter = value;
+            });
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            constraints: const BoxConstraints(minHeight: 82),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+            decoration: BoxDecoration(
+              color: selected ? const Color(0xFF2563EB) : Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: selected
+                    ? const Color(0xFF2563EB)
+                    : const Color(0xFFE2E8F0),
+              ),
+              boxShadow: selected
+                  ? const [
+                      BoxShadow(
+                        color: Color(0x1F2563EB),
+                        blurRadius: 10,
+                        offset: Offset(0, 4),
+                      ),
+                    ]
+                  : const [
+                      BoxShadow(
+                        color: Color(0x080F172A),
+                        blurRadius: 6,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  size: 19,
+                  color: selected ? Colors.white : const Color(0xFF64748B),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w600,
+                    color: selected ? Colors.white : const Color(0xFF475569),
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  count.toString(),
+                  style: TextStyle(
+                    fontSize: 18,
+                    height: 1,
+                    fontWeight: FontWeight.w800,
+                    color: selected ? Colors.white : const Color(0xFF0F172A),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
 
   Widget _buildFilters() {
-    return SizedBox(
-      height: 52,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding:
-            const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 6,
-        ),
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
         children: [
-          _buildFilterChip(
-            value: 'ALL',
-            label: 'Tất cả',
-            count: _requests.length,
+          Row(
+            children: [
+              _buildStatusFilter(
+                value: 'ALL',
+                label: 'Tất cả',
+                count: _requests.length,
+                icon: Icons.dashboard_outlined,
+              ),
+              _buildStatusFilter(
+                value: 'ASSIGNED',
+                label: 'Đã giao',
+                count: _countStatus('ASSIGNED'),
+                icon: Icons.assignment_ind_outlined,
+              ),
+              _buildStatusFilter(
+                value: 'REWORK',
+                label: 'Làm lại',
+                count: _countStatus('REWORK'),
+                icon: Icons.replay_rounded,
+              ),
+            ],
           ),
-          _buildFilterChip(
-            value: 'ASSIGNED',
-            label: 'Đã giao',
-            count:
-                _countStatus('ASSIGNED'),
-          ),
-          _buildFilterChip(
-            value: 'REWORK',
-            label: 'Làm lại',
-            count:
-                _countStatus('REWORK'),
-          ),
-          _buildFilterChip(
-            value: 'IN_PROGRESS',
-            label: 'Đang xử lý',
-            count:
-                _countStatus('IN_PROGRESS'),
-          ),
-          _buildFilterChip(
-            value:
-                'WAITING_CONFIRMATION',
-            label: 'Chờ xác nhận',
-            count: _countStatus(
-              'WAITING_CONFIRMATION',
-            ),
-          ),
-          _buildFilterChip(
-            value: 'COMPLETED',
-            label: 'Hoàn thành',
-            count:
-                _countStatus('COMPLETED'),
+          Row(
+            children: [
+              _buildStatusFilter(
+                value: 'IN_PROGRESS',
+                label: 'Đang xử lý',
+                count: _countStatus('IN_PROGRESS'),
+                icon: Icons.build_circle_outlined,
+              ),
+              _buildStatusFilter(
+                value: 'WAITING_USER_CONFIRMATION',
+                label: 'Chờ xác nhận',
+                count: _countStatus('WAITING_USER_CONFIRMATION'),
+                icon: Icons.hourglass_top_rounded,
+              ),
+              _buildStatusFilter(
+                value: 'COMPLETED',
+                label: 'Hoàn thành',
+                count: _countStatus('COMPLETED'),
+                icon: Icons.check_circle_outline_rounded,
+              ),
+            ],
           ),
         ],
       ),
@@ -583,110 +624,112 @@ class _RequestListScreenState
   }
 
   // ============================================================
+
   // REQUEST CARD
+
   // ============================================================
 
-  Widget _buildRequestCard(
-    RequestModel request,
-  ) {
-    final statusColor =
-        _getStatusColor(
-          request.statusCode,
-        );
+  Widget _buildRequestCard(RequestModel request) {
+    final statusColor = _getStatusColor(request.statusCode);
 
-    final statusBackground =
-        _getStatusBackground(
-          request.statusCode,
-        );
+    final statusBackground = _getStatusBackground(request.statusCode);
 
-    final priorityColor =
-        _getPriorityColor(
-          request.priorityName,
-        );
+    final priorityColor = _getPriorityColor(request.priorityName);
 
     return Container(
-      margin: const EdgeInsets.only(
-        left: 16,
-        right: 16,
-        bottom: 12,
-      ),
+      margin: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
+
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius:
-            BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE5E7EB),
-        ),
+
+        borderRadius: BorderRadius.circular(16),
+
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+
         boxShadow: const [
           BoxShadow(
             color: Color(0x0D000000),
+
             blurRadius: 10,
+
             offset: Offset(0, 3),
           ),
         ],
       ),
+
       child: Material(
         color: Colors.transparent,
-        borderRadius:
-            BorderRadius.circular(16),
+
+        borderRadius: BorderRadius.circular(16),
+
         child: InkWell(
-          borderRadius:
-              BorderRadius.circular(16),
-          onTap: () {
-            // Bước tiếp theo:
-            // mở màn hình chi tiết công việc.
+          borderRadius: BorderRadius.circular(16),
+
+          onTap: () async {
+            final changed = await Navigator.push<bool>(
+              context,
+
+              MaterialPageRoute(
+                builder: (context) => RequestDetailScreen(request: request),
+              ),
+            );
+
+            if (changed == true) {
+              await _loadRequests();
+            }
           },
+
           child: Padding(
-            padding:
-                const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
+
             child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
+
               children: [
                 // Mã + trạng thái
+
                 Row(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+
                   children: [
                     Expanded(
                       child: Text(
                         request.requestCode,
-                        style:
-                            const TextStyle(
+
+                        style: const TextStyle(
                           fontSize: 13,
-                          fontWeight:
-                              FontWeight.w700,
-                          color:
-                              Color(0xFF2563EB),
+
+                          fontWeight: FontWeight.w700,
+
+                          color: Color(0xFF2563EB),
+
                           letterSpacing: 0.2,
                         ),
                       ),
                     ),
 
                     Container(
-                      padding:
-                          const EdgeInsets
-                              .symmetric(
+                      padding: const EdgeInsets.symmetric(
                         horizontal: 10,
+
                         vertical: 6,
                       ),
-                      decoration:
-                          BoxDecoration(
-                        color:
-                            statusBackground,
-                        borderRadius:
-                            BorderRadius
-                                .circular(20),
+
+                      decoration: BoxDecoration(
+                        color: statusBackground,
+
+                        borderRadius: BorderRadius.circular(20),
                       ),
+
                       child: Text(
-                        _getStatusLabel(
-                          request.statusCode,
-                        ),
+                        _getStatusLabel(request.statusCode),
+
                         style: TextStyle(
                           color: statusColor,
+
                           fontSize: 11.5,
-                          fontWeight:
-                              FontWeight.w700,
+
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
@@ -697,66 +740,64 @@ class _RequestListScreenState
 
                 Text(
                   request.title,
+
                   maxLines: 2,
-                  overflow:
-                      TextOverflow.ellipsis,
-                  style:
-                      const TextStyle(
+
+                  overflow: TextOverflow.ellipsis,
+
+                  style: const TextStyle(
                     fontSize: 17,
+
                     height: 1.3,
-                    fontWeight:
-                        FontWeight.w700,
-                    color:
-                        Color(0xFF172033),
+
+                    fontWeight: FontWeight.w700,
+
+                    color: Color(0xFF172033),
                   ),
                 ),
 
-                if (request.description
-                    .trim()
-                    .isNotEmpty) ...[
+                if (request.description.trim().isNotEmpty) ...[
                   const SizedBox(height: 6),
+
                   Text(
                     request.description,
+
                     maxLines: 2,
-                    overflow:
-                        TextOverflow.ellipsis,
-                    style:
-                        const TextStyle(
+
+                    overflow: TextOverflow.ellipsis,
+
+                    style: const TextStyle(
                       fontSize: 13.5,
+
                       height: 1.4,
-                      color:
-                          Color(0xFF6B7280),
+
+                      color: Color(0xFF6B7280),
                     ),
                   ),
                 ],
 
                 const SizedBox(height: 15),
 
-                const Divider(
-                  height: 1,
-                  color: Color(0xFFEEF0F3),
-                ),
+                const Divider(height: 1, color: Color(0xFFEEF0F3)),
 
                 const SizedBox(height: 14),
 
                 _buildInfoItem(
-                  icon: Icons
-                      .person_outline_rounded,
+                  icon: Icons.person_outline_rounded,
+
                   label: 'Người yêu cầu',
-                  value:
-                      request.requesterName ??
-                      '-',
+
+                  value: request.requesterName ?? '-',
                 ),
 
                 const SizedBox(height: 10),
 
                 _buildInfoItem(
-                  icon:
-                      Icons.category_outlined,
+                  icon: Icons.category_outlined,
+
                   label: 'Danh mục',
-                  value:
-                      request.categoryName ??
-                      '-',
+
+                  value: request.categoryName ?? '-',
                 ),
 
                 const SizedBox(height: 10),
@@ -764,33 +805,26 @@ class _RequestListScreenState
                 Row(
                   children: [
                     Expanded(
-                      child:
-                          _buildCompactInfo(
-                        icon:
-                            Icons.flag_outlined,
+                      child: _buildCompactInfo(
+                        icon: Icons.flag_outlined,
+
                         label: 'Ưu tiên',
-                        value:
-                            _getPriorityLabel(
-                          request
-                              .priorityName,
-                        ),
-                        valueColor:
-                            priorityColor,
+
+                        value: _getPriorityLabel(request.priorityName),
+
+                        valueColor: priorityColor,
                       ),
                     ),
 
                     const SizedBox(width: 12),
 
                     Expanded(
-                      child:
-                          _buildCompactInfo(
-                        icon: Icons
-                            .schedule_rounded,
+                      child: _buildCompactInfo(
+                        icon: Icons.schedule_rounded,
+
                         label: 'Hạn xử lý',
-                        value: _formatDate(
-                          request
-                              .expectedCompletionAt,
-                        ),
+
+                        value: _formatDate(request.expectedCompletionAt),
                       ),
                     ),
                   ],
@@ -802,31 +836,36 @@ class _RequestListScreenState
                   children: [
                     Text(
                       'Ngày tạo: ${_formatDate(request.createdAt)}',
-                      style:
-                          const TextStyle(
+
+                      style: const TextStyle(
                         fontSize: 12,
-                        color:
-                            Color(0xFF94A3B8),
+
+                        color: Color(0xFF94A3B8),
                       ),
                     ),
+
                     const Spacer(),
+
                     const Text(
                       'Xem chi tiết',
+
                       style: TextStyle(
-                        color:
-                            Color(0xFF2563EB),
+                        color: Color(0xFF2563EB),
+
                         fontSize: 13,
-                        fontWeight:
-                            FontWeight.w600,
+
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
+
                     const SizedBox(width: 2),
+
                     const Icon(
-                      Icons
-                          .chevron_right_rounded,
+                      Icons.chevron_right_rounded,
+
                       size: 20,
-                      color:
-                          Color(0xFF2563EB),
+
+                      color: Color(0xFF2563EB),
                     ),
                   ],
                 ),
@@ -840,28 +879,27 @@ class _RequestListScreenState
 
   Widget _buildInfoItem({
     required IconData icon,
+
     required String label,
+
     required String value,
   }) {
     return Row(
-      crossAxisAlignment:
-          CrossAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+
       children: [
         Container(
           width: 32,
+
           height: 32,
+
           decoration: BoxDecoration(
-            color:
-                const Color(0xFFF3F6FA),
-            borderRadius:
-                BorderRadius.circular(8),
+            color: const Color(0xFFF3F6FA),
+
+            borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(
-            icon,
-            size: 17,
-            color:
-                const Color(0xFF64748B),
-          ),
+
+          child: Icon(icon, size: 17, color: const Color(0xFF64748B)),
         ),
 
         const SizedBox(width: 10),
@@ -869,27 +907,22 @@ class _RequestListScreenState
         Expanded(
           child: RichText(
             maxLines: 1,
-            overflow:
-                TextOverflow.ellipsis,
+
+            overflow: TextOverflow.ellipsis,
+
             text: TextSpan(
-              style:
-                  const TextStyle(
-                fontSize: 13.5,
-                color:
-                    Color(0xFF6B7280),
-              ),
+              style: const TextStyle(fontSize: 13.5, color: Color(0xFF6B7280)),
+
               children: [
-                TextSpan(
-                  text: '$label: ',
-                ),
+                TextSpan(text: '$label: '),
+
                 TextSpan(
                   text: value,
-                  style:
-                      const TextStyle(
-                    color:
-                        Color(0xFF374151),
-                    fontWeight:
-                        FontWeight.w600,
+
+                  style: const TextStyle(
+                    color: Color(0xFF374151),
+
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
@@ -902,41 +935,40 @@ class _RequestListScreenState
 
   Widget _buildCompactInfo({
     required IconData icon,
+
     required String label,
+
     required String value,
+
     Color? valueColor,
   }) {
     return Container(
       padding: const EdgeInsets.all(10),
+
       decoration: BoxDecoration(
-        color:
-            const Color(0xFFF8FAFC),
-        borderRadius:
-            BorderRadius.circular(10),
+        color: const Color(0xFFF8FAFC),
+
+        borderRadius: BorderRadius.circular(10),
       ),
+
       child: Row(
         children: [
-          Icon(
-            icon,
-            size: 18,
-            color:
-                const Color(0xFF64748B),
-          ),
+          Icon(icon, size: 18, color: const Color(0xFF64748B)),
 
           const SizedBox(width: 7),
 
           Expanded(
             child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
+
               children: [
                 Text(
                   label,
-                  style:
-                      const TextStyle(
+
+                  style: const TextStyle(
                     fontSize: 10.5,
-                    color:
-                        Color(0xFF94A3B8),
+
+                    color: Color(0xFF94A3B8),
                   ),
                 ),
 
@@ -944,18 +976,17 @@ class _RequestListScreenState
 
                 Text(
                   value,
+
                   maxLines: 1,
-                  overflow:
-                      TextOverflow.ellipsis,
+
+                  overflow: TextOverflow.ellipsis,
+
                   style: TextStyle(
                     fontSize: 12.5,
-                    fontWeight:
-                        FontWeight.w700,
-                    color:
-                        valueColor ??
-                        const Color(
-                          0xFF374151,
-                        ),
+
+                    fontWeight: FontWeight.w700,
+
+                    color: valueColor ?? const Color(0xFF374151),
                   ),
                 ),
               ],
@@ -967,32 +998,30 @@ class _RequestListScreenState
   }
 
   // ============================================================
+
   // EMPTY
+
   // ============================================================
 
   Widget _buildEmptyState() {
     final hasSearch =
-        _searchController.text
-            .trim()
-            .isNotEmpty ||
-        _selectedFilter != 'ALL';
+        _searchController.text.trim().isNotEmpty || _selectedFilter != 'ALL';
 
     return RefreshIndicator(
       onRefresh: _loadRequests,
+
       child: ListView(
-        physics:
-            const AlwaysScrollableScrollPhysics(),
+        physics: const AlwaysScrollableScrollPhysics(),
+
         children: [
           const SizedBox(height: 100),
 
           Icon(
-            hasSearch
-                ? Icons.search_off_rounded
-                : Icons
-                    .assignment_outlined,
+            hasSearch ? Icons.search_off_rounded : Icons.assignment_outlined,
+
             size: 65,
-            color:
-                const Color(0xFFCBD5E1),
+
+            color: const Color(0xFFCBD5E1),
           ),
 
           const SizedBox(height: 16),
@@ -1001,14 +1030,15 @@ class _RequestListScreenState
             hasSearch
                 ? 'Không tìm thấy công việc phù hợp'
                 : 'Chưa có công việc được giao',
+
             textAlign: TextAlign.center,
-            style:
-                const TextStyle(
+
+            style: const TextStyle(
               fontSize: 16,
-              fontWeight:
-                  FontWeight.w600,
-              color:
-                  Color(0xFF475569),
+
+              fontWeight: FontWeight.w600,
+
+              color: Color(0xFF475569),
             ),
           ),
 
@@ -1018,13 +1048,10 @@ class _RequestListScreenState
             hasSearch
                 ? 'Thử thay đổi từ khóa hoặc bộ lọc.'
                 : 'Các công việc được giao sẽ hiển thị tại đây.',
+
             textAlign: TextAlign.center,
-            style:
-                const TextStyle(
-              fontSize: 13,
-              color:
-                  Color(0xFF94A3B8),
-            ),
+
+            style: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
           ),
         ],
       ),
@@ -1032,41 +1059,42 @@ class _RequestListScreenState
   }
 
   // ============================================================
+
   // BODY
+
   // ============================================================
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const Center(
-        child:
-            CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (_errorMessage != null) {
       return Center(
         child: Padding(
-          padding:
-              const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(24),
+
           child: Column(
-            mainAxisSize:
-                MainAxisSize.min,
+            mainAxisSize: MainAxisSize.min,
+
             children: [
               Container(
                 width: 64,
+
                 height: 64,
-                decoration:
-                    BoxDecoration(
-                  color:
-                      Colors.red.shade50,
+
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+
                   shape: BoxShape.circle,
                 ),
+
                 child: Icon(
-                  Icons
-                      .error_outline_rounded,
+                  Icons.error_outline_rounded,
+
                   size: 34,
-                  color:
-                      Colors.red.shade600,
+
+                  color: Colors.red.shade600,
                 ),
               ),
 
@@ -1074,35 +1102,28 @@ class _RequestListScreenState
 
               const Text(
                 'Không thể tải công việc',
-                style: TextStyle(
-                  fontSize: 17,
-                  fontWeight:
-                      FontWeight.w700,
-                ),
+
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
               ),
 
               const SizedBox(height: 8),
 
               Text(
                 _errorMessage!,
-                textAlign:
-                    TextAlign.center,
-                style:
-                    const TextStyle(
-                  color:
-                      Color(0xFF6B7280),
-                ),
+
+                textAlign: TextAlign.center,
+
+                style: const TextStyle(color: Color(0xFF6B7280)),
               ),
 
               const SizedBox(height: 18),
 
               ElevatedButton.icon(
                 onPressed: _loadRequests,
-                icon: const Icon(
-                  Icons.refresh_rounded,
-                ),
-                label:
-                    const Text('Thử lại'),
+
+                icon: const Icon(Icons.refresh_rounded),
+
+                label: const Text('Thử lại'),
               ),
             ],
           ),
@@ -1110,8 +1131,7 @@ class _RequestListScreenState
       );
     }
 
-    final filteredRequests =
-        _filteredRequests;
+    final filteredRequests = _filteredRequests;
 
     return Column(
       children: [
@@ -1120,24 +1140,19 @@ class _RequestListScreenState
         _buildFilters(),
 
         Padding(
-          padding:
-              const EdgeInsets.fromLTRB(
-            18,
-            6,
-            18,
-            12,
-          ),
+          padding: const EdgeInsets.fromLTRB(18, 6, 18, 12),
+
           child: Row(
             children: [
               Text(
                 '${filteredRequests.length} công việc',
-                style:
-                    const TextStyle(
+
+                style: const TextStyle(
                   fontSize: 13,
-                  fontWeight:
-                      FontWeight.w600,
-                  color:
-                      Color(0xFF64748B),
+
+                  fontWeight: FontWeight.w600,
+
+                  color: Color(0xFF64748B),
                 ),
               ),
             ],
@@ -1145,30 +1160,20 @@ class _RequestListScreenState
         ),
 
         Expanded(
-          child:
-              filteredRequests.isEmpty
+          child: filteredRequests.isEmpty
               ? _buildEmptyState()
               : RefreshIndicator(
-                  onRefresh:
-                      _loadRequests,
-                  child:
-                      ListView.builder(
-                    physics:
-                        const AlwaysScrollableScrollPhysics(),
-                    padding:
-                        const EdgeInsets
-                            .only(
-                      bottom: 24,
-                    ),
-                    itemCount:
-                        filteredRequests
-                            .length,
-                    itemBuilder:
-                        (context, index) {
-                      return _buildRequestCard(
-                        filteredRequests[
-                            index],
-                      );
+                  onRefresh: _loadRequests,
+
+                  child: ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
+
+                    padding: const EdgeInsets.only(bottom: 24),
+
+                    itemCount: filteredRequests.length,
+
+                    itemBuilder: (context, index) {
+                      return _buildRequestCard(filteredRequests[index]);
                     },
                   ),
                 ),
@@ -1178,19 +1183,16 @@ class _RequestListScreenState
   }
 
   // ============================================================
+
   // SCREEN
+
   // ============================================================
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
+  Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor:
-          const Color(0xFFF4F6FA),
-      body: SafeArea(
-        child: _buildBody(),
-      ),
+      backgroundColor: const Color(0xFFF4F6FA),
+      body: SafeArea(child: _buildBody()),
     );
   }
 }

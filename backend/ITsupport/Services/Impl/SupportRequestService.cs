@@ -1911,7 +1911,8 @@ namespace ITsupport.Services.Impl
         // =========================================================
         // IT STAFF COMPLETE HANDLING
         //
-        // IN_PROGRESS -> WAITING_INTERNAL_REVIEW
+        // IN_PROGRESS -> WAITING_USER_CONFIRMATION
+        // Bắt buộc có ít nhất 01 ảnh/tệp minh chứng ContextType = PROGRESS
         // =========================================================
 
         public async Task<ApiResult<SupportRequestResponse>> CompleteHandlingAsync(
@@ -1938,7 +1939,6 @@ namespace ITsupport.Services.Impl
                     );
             }
 
-
             // -----------------------------------------------------
             // CHECK ASSIGNED IT STAFF
             // -----------------------------------------------------
@@ -1954,7 +1954,6 @@ namespace ITsupport.Services.Impl
                         "Bạn không phải nhân viên IT được phân công xử lý yêu cầu này"
                     );
             }
-
 
             // -----------------------------------------------------
             // CURRENT STATUS
@@ -1975,7 +1974,6 @@ namespace ITsupport.Services.Impl
                     );
             }
 
-
             // -----------------------------------------------------
             // VALIDATE WORKFLOW
             // -----------------------------------------------------
@@ -1995,41 +1993,71 @@ namespace ITsupport.Services.Impl
                     );
             }
 
-
             // -----------------------------------------------------
-            // GET WAITING_INTERNAL_REVIEW STATUS
+            // REQUIRE PROGRESS EVIDENCE
+            //
+            // Flutter upload ảnh minh chứng với ContextType = PROGRESS.
+            // Backend cũng kiểm tra để không thể bỏ qua yêu cầu này
+            // bằng cách gọi trực tiếp API complete-handling.
             // -----------------------------------------------------
 
-            var waitingInternalReviewStatus =
-                await _context.RequestStatuses
-                    .FirstOrDefaultAsync(
-                        s => s.Code == "WAITING_INTERNAL_REVIEW"
+            var hasProgressEvidence =
+                await _context.RequestAttachments
+                    .AnyAsync(
+                        a =>
+                            a.RequestId == supportRequest.Id &&
+                            a.ContextType == "PROGRESS"
                     );
 
-            if (waitingInternalReviewStatus is null)
+            if (!hasProgressEvidence)
             {
                 return ApiResult<SupportRequestResponse>
                     .Failure(
-                        "WAITING_INTERNAL_REVIEW_STATUS_NOT_FOUND",
-                        "Không tìm thấy trạng thái WAITING_INTERNAL_REVIEW"
+                        "PROGRESS_EVIDENCE_REQUIRED",
+                        "Vui lòng tải lên ít nhất một ảnh minh chứng trước khi hoàn thành xử lý"
                     );
             }
 
+            // -----------------------------------------------------
+            // GET WAITING USER CONFIRMATION STATUS
+            //
+            // Giữ đúng mã trạng thái đang được Employee
+            // ConfirmCompletionAsync / RejectCompletionAsync sử dụng.
+            // -----------------------------------------------------
+
+            var waitingUserConfirmationStatus =
+                await _context.RequestStatuses
+                    .FirstOrDefaultAsync(
+                        s => s.Code == "WAITING_USER_CONFIRMATION"
+                    );
+
+            if (waitingUserConfirmationStatus is null)
+            {
+                return ApiResult<SupportRequestResponse>
+                    .Failure(
+                        "WAITING_USER_CONFIRMATION_STATUS_NOT_FOUND",
+                        "Không tìm thấy trạng thái WAITING_USER_CONFIRMATION"
+                    );
+            }
 
             var oldStatusId =
                 supportRequest.StatusId;
 
+            var now =
+                DateTime.UtcNow;
 
             // -----------------------------------------------------
             // UPDATE REQUEST
             // -----------------------------------------------------
 
             supportRequest.StatusId =
-                waitingInternalReviewStatus.Id;
+                waitingUserConfirmationStatus.Id;
 
             supportRequest.UpdatedAt =
-                DateTime.UtcNow;
+                now;
 
+            // Không gán CompletedAt ở đây.
+            // CompletedAt chỉ được gán khi Employee xác nhận hoàn thành.
 
             // -----------------------------------------------------
             // CREATE HISTORY
@@ -2048,23 +2076,21 @@ namespace ITsupport.Services.Impl
                         oldStatusId,
 
                     ToStatusId =
-                        waitingInternalReviewStatus.Id,
+                        waitingUserConfirmationStatus.Id,
 
                     PerformedByUserId =
                         itStaffUserId,
 
                     Description =
-                        "IT staff completed handling and submitted the request for internal review.",
+                        "IT staff completed handling and submitted the request for user confirmation.",
 
                     CreatedAt =
-                        DateTime.UtcNow
+                        now
                 };
-
 
             _context.RequestHistories.Add(
                 history
             );
-
 
             // -----------------------------------------------------
             // SAVE
@@ -2072,23 +2098,24 @@ namespace ITsupport.Services.Impl
 
             await _context.SaveChangesAsync();
 
-
             _logger.LogInformation(
-                "IT staff completed handling. RequestId={RequestId}, ITStaffUserId={ITStaffUserId}, FromStatus={FromStatus}, ToStatus=WAITING_INTERNAL_REVIEW",
+                "IT staff completed handling. RequestId={RequestId}, ITStaffUserId={ITStaffUserId}, FromStatus={FromStatus}, ToStatus=WAITING_USER_CONFIRMATION",
                 supportRequest.Id,
                 itStaffUserId,
                 currentStatus.Code
             );
 
+            // -----------------------------------------------------
+            // NOTIFY EMPLOYEE
+            // -----------------------------------------------------
 
             await SendNotificationToUserAsync(
-                supportRequest.CurrentCoordinatorId,
+                supportRequest.RequesterId,
                 supportRequest,
-                "WAITING_INTERNAL_REVIEW",
-                $"[IT Support] Yêu cầu chờ duyệt nội bộ - {supportRequest.RequestCode}",
-                "Nhân viên IT đã hoàn thành xử lý yêu cầu. Vui lòng kiểm tra và thực hiện duyệt nội bộ."
+                "WAITING_USER_CONFIRMATION",
+                $"[IT Support] Vui lòng xác nhận kết quả - {supportRequest.RequestCode}",
+                "Yêu cầu hỗ trợ đã được nhân viên IT xử lý. Vui lòng đăng nhập hệ thống để kiểm tra và xác nhận kết quả."
             );
-
 
             return ApiResult<SupportRequestResponse>
                 .Success(
@@ -2097,6 +2124,7 @@ namespace ITsupport.Services.Impl
                     )
                 );
         }
+
 
         // =========================================================
         // COORDINATOR INTERNAL REVIEW PASS
