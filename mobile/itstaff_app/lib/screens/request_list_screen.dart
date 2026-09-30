@@ -7,20 +7,43 @@ class RequestListScreen extends StatefulWidget {
   const RequestListScreen({super.key});
 
   @override
-  State<RequestListScreen> createState() => _RequestListScreenState();
+  State<RequestListScreen> createState() =>
+      _RequestListScreenState();
 }
 
-class _RequestListScreenState extends State<RequestListScreen> {
+class _RequestListScreenState
+    extends State<RequestListScreen> {
   bool _isLoading = true;
   String? _errorMessage;
 
   List<RequestModel> _requests = [];
+  String _selectedFilter = 'ALL';
+
+  final TextEditingController _searchController =
+      TextEditingController();
 
   @override
   void initState() {
     super.initState();
+
     _loadRequests();
+
+    _searchController.addListener(() {
+      if (mounted) {
+        setState(() {});
+      }
+    });
   }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  // ============================================================
+  // LOAD DATA
+  // ============================================================
 
   Future<void> _loadRequests() async {
     setState(() {
@@ -29,7 +52,8 @@ class _RequestListScreenState extends State<RequestListScreen> {
     });
 
     try {
-      final requests = await ApiService.getAssignedRequests();
+      final requests =
+          await ApiService.getAssignedRequests();
 
       if (!mounted) return;
 
@@ -57,6 +81,118 @@ class _RequestListScreenState extends State<RequestListScreen> {
     }
   }
 
+  // ============================================================
+  // SORT
+  // ============================================================
+
+  /// Thứ tự ưu tiên hiển thị công việc:
+  ///
+  /// 0 - ASSIGNED: Đã giao
+  /// 1 - REWORK: Cần làm lại
+  /// 2 - IN_PROGRESS: Đang xử lý
+  /// 3 - WAITING_CONFIRMATION: Chờ xác nhận
+  /// 4 - COMPLETED: Hoàn thành
+  int _getStatusSortPriority(String? statusCode) {
+    switch (statusCode?.toUpperCase()) {
+      case 'ASSIGNED':
+        return 0;
+
+      case 'REWORK':
+        return 1;
+
+      case 'IN_PROGRESS':
+        return 2;
+
+      case 'WAITING_CONFIRMATION':
+        return 3;
+
+      case 'COMPLETED':
+        return 4;
+
+      default:
+        return 5;
+    }
+  }
+
+  // ============================================================
+  // FILTER + SEARCH + SORT
+  // ============================================================
+
+  List<RequestModel> get _filteredRequests {
+    final keyword =
+        _searchController.text.trim().toLowerCase();
+
+    final result = _requests.where((request) {
+      final matchesSearch =
+          keyword.isEmpty ||
+          request.requestCode
+              .toLowerCase()
+              .contains(keyword) ||
+          request.title
+              .toLowerCase()
+              .contains(keyword) ||
+          request.description
+              .toLowerCase()
+              .contains(keyword) ||
+          (request.requesterName ?? '')
+              .toLowerCase()
+              .contains(keyword) ||
+          (request.categoryName ?? '')
+              .toLowerCase()
+              .contains(keyword);
+
+      final status =
+          request.statusCode?.toUpperCase() ?? '';
+
+      final matchesStatus =
+          _selectedFilter == 'ALL' ||
+          status == _selectedFilter;
+
+      return matchesSearch && matchesStatus;
+    }).toList();
+
+    // ==========================================================
+    // SẮP XẾP
+    // ==========================================================
+    //
+    // 1. Đã giao
+    // 2. Cần làm lại
+    // 3. Đang xử lý
+    // 4. Chờ xác nhận
+    // 5. Hoàn thành
+    //
+    // Trong cùng một nhóm:
+    // ngày tạo mới nhất lên trên.
+    // ==========================================================
+
+    result.sort((a, b) {
+      final priorityA =
+          _getStatusSortPriority(a.statusCode);
+
+      final priorityB =
+          _getStatusSortPriority(b.statusCode);
+
+      if (priorityA != priorityB) {
+        return priorityA.compareTo(priorityB);
+      }
+
+      return b.createdAt.compareTo(a.createdAt);
+    });
+
+    return result;
+  }
+
+  int _countStatus(String status) {
+    return _requests.where((request) {
+      return request.statusCode?.toUpperCase() ==
+          status.toUpperCase();
+    }).length;
+  }
+
+  // ============================================================
+  // FORMAT
+  // ============================================================
+
   String _formatDate(DateTime? date) {
     if (date == null) {
       return '-';
@@ -64,59 +200,276 @@ class _RequestListScreenState extends State<RequestListScreen> {
 
     final localDate = date.toLocal();
 
-    final day = localDate.day.toString().padLeft(2, '0');
-    final month = localDate.month.toString().padLeft(2, '0');
+    final day =
+        localDate.day.toString().padLeft(2, '0');
+
+    final month =
+        localDate.month.toString().padLeft(2, '0');
 
     return '$day/$month/${localDate.year}';
+  }
+
+  String _getStatusLabel(String? statusCode) {
+    switch (statusCode?.toUpperCase()) {
+      case 'NEW':
+        return 'Mới';
+
+      case 'ASSIGNED':
+        return 'Đã giao';
+
+      case 'IN_PROGRESS':
+        return 'Đang xử lý';
+
+      case 'REWORK':
+        return 'Cần làm lại';
+
+      case 'WAITING_CONFIRMATION':
+        return 'Chờ xác nhận';
+
+      case 'COMPLETED':
+        return 'Hoàn thành';
+
+      default:
+        return statusCode ?? 'Không xác định';
+    }
   }
 
   Color _getStatusColor(String? statusCode) {
     switch (statusCode?.toUpperCase()) {
       case 'ASSIGNED':
-        return Colors.orange;
+        return Colors.orange.shade700;
 
       case 'IN_PROGRESS':
-        return Colors.blue;
+        return Colors.blue.shade700;
 
       case 'REWORK':
-        return Colors.red;
+        return Colors.red.shade700;
 
-      case 'WAITING_INTERNAL_REVIEW':
-        return Colors.purple;
-
-      case 'WAITING_USER_CONFIRMATION':
-        return Colors.teal;
+      case 'WAITING_CONFIRMATION':
+        return Colors.deepPurple.shade600;
 
       case 'COMPLETED':
-        return Colors.green;
+        return Colors.green.shade700;
+
+      case 'NEW':
+        return Colors.blueGrey.shade600;
 
       default:
-        return Colors.grey;
+        return Colors.grey.shade700;
     }
   }
 
-  Widget _buildInfoRow(
-    IconData icon,
-    String label,
-    String value,
+  Color _getStatusBackground(
+    String? statusCode,
   ) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            icon,
-            size: 18,
-            color: Colors.grey.shade600,
+    switch (statusCode?.toUpperCase()) {
+      case 'ASSIGNED':
+        return Colors.orange.shade50;
+
+      case 'IN_PROGRESS':
+        return Colors.blue.shade50;
+
+      case 'REWORK':
+        return Colors.red.shade50;
+
+      case 'WAITING_CONFIRMATION':
+        return Colors.deepPurple.shade50;
+
+      case 'COMPLETED':
+        return Colors.green.shade50;
+
+      case 'NEW':
+        return Colors.blueGrey.shade50;
+
+      default:
+        return Colors.grey.shade100;
+    }
+  }
+
+  String _getPriorityLabel(
+    String? priorityName,
+  ) {
+    switch (priorityName?.trim().toLowerCase()) {
+      case 'high':
+        return 'Cao';
+
+      case 'medium':
+        return 'Trung bình';
+
+      case 'low':
+        return 'Thấp';
+
+      case 'critical':
+        return 'Khẩn cấp';
+
+      default:
+        return priorityName ?? '-';
+    }
+  }
+
+  Color _getPriorityColor(
+    String? priorityName,
+  ) {
+    switch (priorityName?.trim().toLowerCase()) {
+      case 'critical':
+        return Colors.red.shade800;
+
+      case 'high':
+        return Colors.red.shade600;
+
+      case 'medium':
+        return Colors.orange.shade700;
+
+      case 'low':
+        return Colors.green.shade700;
+
+      default:
+        return Colors.grey.shade700;
+    }
+  }
+
+  // ============================================================
+  // HEADER
+  // ============================================================
+
+  Widget _buildHeader() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(
+        20,
+        18,
+        20,
+        18,
+      ),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          bottom: BorderSide(
+            color: Color(0xFFE9EDF3),
           ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              '$label: $value',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey.shade700,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color:
+                      const Color(0xFFEAF2FF),
+                  borderRadius:
+                      BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.assignment_outlined,
+                  color: Color(0xFF2563EB),
+                ),
+              ),
+
+              const SizedBox(width: 12),
+
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Công việc của tôi',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight:
+                            FontWeight.w700,
+                        color:
+                            Color(0xFF172033),
+                      ),
+                    ),
+                    SizedBox(height: 3),
+                    Text(
+                      'Theo dõi và xử lý yêu cầu hỗ trợ',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color:
+                            Color(0xFF6B7280),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              IconButton(
+                tooltip: 'Làm mới',
+                onPressed:
+                    _isLoading
+                        ? null
+                        : _loadRequests,
+                icon: const Icon(
+                  Icons.refresh_rounded,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 18),
+
+          TextField(
+            controller: _searchController,
+            decoration: InputDecoration(
+              hintText:
+                  'Tìm mã yêu cầu, tiêu đề...',
+              hintStyle: const TextStyle(
+                color: Color(0xFF9CA3AF),
+              ),
+              prefixIcon: const Icon(
+                Icons.search_rounded,
+              ),
+              suffixIcon:
+                  _searchController
+                      .text
+                      .isNotEmpty
+                  ? IconButton(
+                      onPressed: () {
+                        _searchController
+                            .clear();
+                      },
+                      icon: const Icon(
+                        Icons.close_rounded,
+                      ),
+                    )
+                  : null,
+              filled: true,
+              fillColor:
+                  const Color(0xFFF7F9FC),
+              contentPadding:
+                  const EdgeInsets.symmetric(
+                    vertical: 14,
+                  ),
+              border: OutlineInputBorder(
+                borderRadius:
+                    BorderRadius.circular(14),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder:
+                  OutlineInputBorder(
+                borderRadius:
+                    BorderRadius.circular(14),
+                borderSide:
+                    const BorderSide(
+                  color: Color(0xFFE5E7EB),
+                ),
+              ),
+              focusedBorder:
+                  OutlineInputBorder(
+                borderRadius:
+                    BorderRadius.circular(14),
+                borderSide:
+                    const BorderSide(
+                  color: Color(0xFF2563EB),
+                  width: 1.5,
+                ),
               ),
             ),
           ),
@@ -125,153 +478,631 @@ class _RequestListScreenState extends State<RequestListScreen> {
     );
   }
 
-  Widget _buildRequestCard(RequestModel request) {
-    final statusColor = _getStatusColor(
-      request.statusCode,
-    );
+  // ============================================================
+  // FILTER CHIPS
+  // ============================================================
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      elevation: 1,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () {
-          // Bước tiếp theo:
-          // mở màn hình chi tiết yêu cầu.
+  Widget _buildFilterChip({
+    required String value,
+    required String label,
+    required int count,
+  }) {
+    final selected =
+        _selectedFilter == value;
+
+    return Padding(
+      padding:
+          const EdgeInsets.only(right: 8),
+      child: ChoiceChip(
+        selected: selected,
+        onSelected: (_) {
+          setState(() {
+            _selectedFilter = value;
+          });
         },
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Text(
-                      request.requestCode,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
+        showCheckmark: false,
+        label: Text(
+          '$label  $count',
+        ),
+        labelStyle: TextStyle(
+          fontSize: 13,
+          fontWeight: selected
+              ? FontWeight.w700
+              : FontWeight.w500,
+          color: selected
+              ? Colors.white
+              : const Color(0xFF4B5563),
+        ),
+        selectedColor:
+            const Color(0xFF2563EB),
+        backgroundColor: Colors.white,
+        side: BorderSide(
+          color: selected
+              ? const Color(0xFF2563EB)
+              : const Color(0xFFE1E5EB),
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius:
+              BorderRadius.circular(20),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilters() {
+    return SizedBox(
+      height: 52,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding:
+            const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 6,
+        ),
+        children: [
+          _buildFilterChip(
+            value: 'ALL',
+            label: 'Tất cả',
+            count: _requests.length,
+          ),
+          _buildFilterChip(
+            value: 'ASSIGNED',
+            label: 'Đã giao',
+            count:
+                _countStatus('ASSIGNED'),
+          ),
+          _buildFilterChip(
+            value: 'REWORK',
+            label: 'Làm lại',
+            count:
+                _countStatus('REWORK'),
+          ),
+          _buildFilterChip(
+            value: 'IN_PROGRESS',
+            label: 'Đang xử lý',
+            count:
+                _countStatus('IN_PROGRESS'),
+          ),
+          _buildFilterChip(
+            value:
+                'WAITING_CONFIRMATION',
+            label: 'Chờ xác nhận',
+            count: _countStatus(
+              'WAITING_CONFIRMATION',
+            ),
+          ),
+          _buildFilterChip(
+            value: 'COMPLETED',
+            label: 'Hoàn thành',
+            count:
+                _countStatus('COMPLETED'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ============================================================
+  // REQUEST CARD
+  // ============================================================
+
+  Widget _buildRequestCard(
+    RequestModel request,
+  ) {
+    final statusColor =
+        _getStatusColor(
+          request.statusCode,
+        );
+
+    final statusBackground =
+        _getStatusBackground(
+          request.statusCode,
+        );
+
+    final priorityColor =
+        _getPriorityColor(
+          request.priorityName,
+        );
+
+    return Container(
+      margin: const EdgeInsets.only(
+        left: 16,
+        right: 16,
+        bottom: 12,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius:
+            BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFFE5E7EB),
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0D000000),
+            blurRadius: 10,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius:
+            BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius:
+              BorderRadius.circular(16),
+          onTap: () {
+            // Bước tiếp theo:
+            // mở màn hình chi tiết công việc.
+          },
+          child: Padding(
+            padding:
+                const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
+              children: [
+                // Mã + trạng thái
+                Row(
+                  crossAxisAlignment:
+                      CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        request.requestCode,
+                        style:
+                            const TextStyle(
+                          fontSize: 13,
+                          fontWeight:
+                              FontWeight.w700,
+                          color:
+                              Color(0xFF2563EB),
+                          letterSpacing: 0.2,
+                        ),
                       ),
                     ),
+
+                    Container(
+                      padding:
+                          const EdgeInsets
+                              .symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration:
+                          BoxDecoration(
+                        color:
+                            statusBackground,
+                        borderRadius:
+                            BorderRadius
+                                .circular(20),
+                      ),
+                      child: Text(
+                        _getStatusLabel(
+                          request.statusCode,
+                        ),
+                        style: TextStyle(
+                          color: statusColor,
+                          fontSize: 11.5,
+                          fontWeight:
+                              FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 12),
+
+                Text(
+                  request.title,
+                  maxLines: 2,
+                  overflow:
+                      TextOverflow.ellipsis,
+                  style:
+                      const TextStyle(
+                    fontSize: 17,
+                    height: 1.3,
+                    fontWeight:
+                        FontWeight.w700,
+                    color:
+                        Color(0xFF172033),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: statusColor.withValues(
-                        alpha: 0.12,
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      request.statusName ??
-                          request.statusCode ??
-                          '-',
-                      style: TextStyle(
-                        color: statusColor,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                      ),
+                ),
+
+                if (request.description
+                    .trim()
+                    .isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    request.description,
+                    maxLines: 2,
+                    overflow:
+                        TextOverflow.ellipsis,
+                    style:
+                        const TextStyle(
+                      fontSize: 13.5,
+                      height: 1.4,
+                      color:
+                          Color(0xFF6B7280),
                     ),
                   ),
                 ],
-              ),
 
-              const SizedBox(height: 12),
+                const SizedBox(height: 15),
 
-              Text(
-                request.title,
-                style: const TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
+                const Divider(
+                  height: 1,
+                  color: Color(0xFFEEF0F3),
                 ),
-              ),
 
-              if (request.description.isNotEmpty) ...[
-                const SizedBox(height: 6),
-                Text(
-                  request.description,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: Colors.grey.shade700,
-                  ),
+                const SizedBox(height: 14),
+
+                _buildInfoItem(
+                  icon: Icons
+                      .person_outline_rounded,
+                  label: 'Người yêu cầu',
+                  value:
+                      request.requesterName ??
+                      '-',
+                ),
+
+                const SizedBox(height: 10),
+
+                _buildInfoItem(
+                  icon:
+                      Icons.category_outlined,
+                  label: 'Danh mục',
+                  value:
+                      request.categoryName ??
+                      '-',
+                ),
+
+                const SizedBox(height: 10),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child:
+                          _buildCompactInfo(
+                        icon:
+                            Icons.flag_outlined,
+                        label: 'Ưu tiên',
+                        value:
+                            _getPriorityLabel(
+                          request
+                              .priorityName,
+                        ),
+                        valueColor:
+                            priorityColor,
+                      ),
+                    ),
+
+                    const SizedBox(width: 12),
+
+                    Expanded(
+                      child:
+                          _buildCompactInfo(
+                        icon: Icons
+                            .schedule_rounded,
+                        label: 'Hạn xử lý',
+                        value: _formatDate(
+                          request
+                              .expectedCompletionAt,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 15),
+
+                Row(
+                  children: [
+                    Text(
+                      'Ngày tạo: ${_formatDate(request.createdAt)}',
+                      style:
+                          const TextStyle(
+                        fontSize: 12,
+                        color:
+                            Color(0xFF94A3B8),
+                      ),
+                    ),
+                    const Spacer(),
+                    const Text(
+                      'Xem chi tiết',
+                      style: TextStyle(
+                        color:
+                            Color(0xFF2563EB),
+                        fontSize: 13,
+                        fontWeight:
+                            FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(width: 2),
+                    const Icon(
+                      Icons
+                          .chevron_right_rounded,
+                      size: 20,
+                      color:
+                          Color(0xFF2563EB),
+                    ),
+                  ],
                 ),
               ],
-
-              const Divider(height: 24),
-
-              _buildInfoRow(
-                Icons.person_outline,
-                'Người yêu cầu',
-                request.requesterName ?? '-',
-              ),
-
-              _buildInfoRow(
-                Icons.category_outlined,
-                'Danh mục',
-                request.categoryName ?? '-',
-              ),
-
-              _buildInfoRow(
-                Icons.flag_outlined,
-                'Mức ưu tiên',
-                request.priorityName ?? '-',
-              ),
-
-              _buildInfoRow(
-                Icons.schedule_outlined,
-                'Hạn dự kiến',
-                _formatDate(
-                  request.expectedCompletionAt,
-                ),
-              ),
-
-              _buildInfoRow(
-                Icons.calendar_today_outlined,
-                'Ngày tạo',
-                _formatDate(request.createdAt),
-              ),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 
+  Widget _buildInfoItem({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+    return Row(
+      crossAxisAlignment:
+          CrossAxisAlignment.center,
+      children: [
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color:
+                const Color(0xFFF3F6FA),
+            borderRadius:
+                BorderRadius.circular(8),
+          ),
+          child: Icon(
+            icon,
+            size: 17,
+            color:
+                const Color(0xFF64748B),
+          ),
+        ),
+
+        const SizedBox(width: 10),
+
+        Expanded(
+          child: RichText(
+            maxLines: 1,
+            overflow:
+                TextOverflow.ellipsis,
+            text: TextSpan(
+              style:
+                  const TextStyle(
+                fontSize: 13.5,
+                color:
+                    Color(0xFF6B7280),
+              ),
+              children: [
+                TextSpan(
+                  text: '$label: ',
+                ),
+                TextSpan(
+                  text: value,
+                  style:
+                      const TextStyle(
+                    color:
+                        Color(0xFF374151),
+                    fontWeight:
+                        FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCompactInfo({
+    required IconData icon,
+    required String label,
+    required String value,
+    Color? valueColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color:
+            const Color(0xFFF8FAFC),
+        borderRadius:
+            BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            size: 18,
+            color:
+                const Color(0xFF64748B),
+          ),
+
+          const SizedBox(width: 7),
+
+          Expanded(
+            child: Column(
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style:
+                      const TextStyle(
+                    fontSize: 10.5,
+                    color:
+                        Color(0xFF94A3B8),
+                  ),
+                ),
+
+                const SizedBox(height: 2),
+
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow:
+                      TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight:
+                        FontWeight.w700,
+                    color:
+                        valueColor ??
+                        const Color(
+                          0xFF374151,
+                        ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ============================================================
+  // EMPTY
+  // ============================================================
+
+  Widget _buildEmptyState() {
+    final hasSearch =
+        _searchController.text
+            .trim()
+            .isNotEmpty ||
+        _selectedFilter != 'ALL';
+
+    return RefreshIndicator(
+      onRefresh: _loadRequests,
+      child: ListView(
+        physics:
+            const AlwaysScrollableScrollPhysics(),
+        children: [
+          const SizedBox(height: 100),
+
+          Icon(
+            hasSearch
+                ? Icons.search_off_rounded
+                : Icons
+                    .assignment_outlined,
+            size: 65,
+            color:
+                const Color(0xFFCBD5E1),
+          ),
+
+          const SizedBox(height: 16),
+
+          Text(
+            hasSearch
+                ? 'Không tìm thấy công việc phù hợp'
+                : 'Chưa có công việc được giao',
+            textAlign: TextAlign.center,
+            style:
+                const TextStyle(
+              fontSize: 16,
+              fontWeight:
+                  FontWeight.w600,
+              color:
+                  Color(0xFF475569),
+            ),
+          ),
+
+          const SizedBox(height: 6),
+
+          Text(
+            hasSearch
+                ? 'Thử thay đổi từ khóa hoặc bộ lọc.'
+                : 'Các công việc được giao sẽ hiển thị tại đây.',
+            textAlign: TextAlign.center,
+            style:
+                const TextStyle(
+              fontSize: 13,
+              color:
+                  Color(0xFF94A3B8),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ============================================================
+  // BODY
+  // ============================================================
+
   Widget _buildBody() {
     if (_isLoading) {
       return const Center(
-        child: CircularProgressIndicator(),
+        child:
+            CircularProgressIndicator(),
       );
     }
 
     if (_errorMessage != null) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding:
+              const EdgeInsets.all(24),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
+            mainAxisSize:
+                MainAxisSize.min,
             children: [
-              const Icon(
-                Icons.error_outline,
-                size: 55,
-                color: Colors.red,
+              Container(
+                width: 64,
+                height: 64,
+                decoration:
+                    BoxDecoration(
+                  color:
+                      Colors.red.shade50,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons
+                      .error_outline_rounded,
+                  size: 34,
+                  color:
+                      Colors.red.shade600,
+                ),
               ),
+
               const SizedBox(height: 16),
+
+              const Text(
+                'Không thể tải công việc',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight:
+                      FontWeight.w700,
+                ),
+              ),
+
+              const SizedBox(height: 8),
+
               Text(
                 _errorMessage!,
-                textAlign: TextAlign.center,
+                textAlign:
+                    TextAlign.center,
+                style:
+                    const TextStyle(
+                  color:
+                      Color(0xFF6B7280),
+                ),
               ),
-              const SizedBox(height: 16),
+
+              const SizedBox(height: 18),
+
               ElevatedButton.icon(
                 onPressed: _loadRequests,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Thử lại'),
+                icon: const Icon(
+                  Icons.refresh_rounded,
+                ),
+                label:
+                    const Text('Thử lại'),
               ),
             ],
           ),
@@ -279,69 +1110,87 @@ class _RequestListScreenState extends State<RequestListScreen> {
       );
     }
 
-    if (_requests.isEmpty) {
-      return RefreshIndicator(
-        onRefresh: _loadRequests,
-        child: ListView(
-          physics:
-              const AlwaysScrollableScrollPhysics(),
-          children: const [
-            SizedBox(height: 180),
-            Icon(
-              Icons.assignment_outlined,
-              size: 70,
-              color: Colors.grey,
-            ),
-            SizedBox(height: 16),
-            Center(
-              child: Text(
-                'Hiện chưa có công việc được giao.',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
+    final filteredRequests =
+        _filteredRequests;
+
+    return Column(
+      children: [
+        _buildHeader(),
+
+        _buildFilters(),
+
+        Padding(
+          padding:
+              const EdgeInsets.fromLTRB(
+            18,
+            6,
+            18,
+            12,
+          ),
+          child: Row(
+            children: [
+              Text(
+                '${filteredRequests.length} công việc',
+                style:
+                    const TextStyle(
+                  fontSize: 13,
+                  fontWeight:
+                      FontWeight.w600,
+                  color:
+                      Color(0xFF64748B),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      );
-    }
 
-    return RefreshIndicator(
-      onRefresh: _loadRequests,
-      child: ListView.builder(
-        physics:
-            const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
-        itemCount: _requests.length,
-        itemBuilder: (context, index) {
-          return _buildRequestCard(
-            _requests[index],
-          );
-        },
-      ),
+        Expanded(
+          child:
+              filteredRequests.isEmpty
+              ? _buildEmptyState()
+              : RefreshIndicator(
+                  onRefresh:
+                      _loadRequests,
+                  child:
+                      ListView.builder(
+                    physics:
+                        const AlwaysScrollableScrollPhysics(),
+                    padding:
+                        const EdgeInsets
+                            .only(
+                      bottom: 24,
+                    ),
+                    itemCount:
+                        filteredRequests
+                            .length,
+                    itemBuilder:
+                        (context, index) {
+                      return _buildRequestCard(
+                        filteredRequests[
+                            index],
+                      );
+                    },
+                  ),
+                ),
+        ),
+      ],
     );
   }
 
+  // ============================================================
+  // SCREEN
+  // ============================================================
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+  ) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
-      appBar: AppBar(
-        title: const Text(
-          'Công việc được giao',
-        ),
-        centerTitle: false,
-        actions: [
-          IconButton(
-            tooltip: 'Làm mới',
-            onPressed:
-                _isLoading ? null : _loadRequests,
-            icon: const Icon(Icons.refresh),
-          ),
-        ],
+      backgroundColor:
+          const Color(0xFFF4F6FA),
+      body: SafeArea(
+        child: _buildBody(),
       ),
-      body: _buildBody(),
     );
   }
 }
