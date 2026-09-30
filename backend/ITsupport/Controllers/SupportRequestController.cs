@@ -13,10 +13,20 @@ namespace ITsupport.Controllers
     public class SupportRequestController : ControllerBase
     {
         private readonly ISupportRequestService _service;
+        private readonly IQrCodeService _qrCodeService;
+        private readonly ITicketPdfService _ticketPdfService;
+        private readonly IConfiguration _configuration;
 
-        public SupportRequestController(ISupportRequestService service)
+        public SupportRequestController(
+            ISupportRequestService service,
+            IQrCodeService qrCodeService,
+            ITicketPdfService ticketPdfService,
+            IConfiguration configuration)
         {
             _service = service;
+            _qrCodeService = qrCodeService;
+            _ticketPdfService = ticketPdfService;
+            _configuration = configuration;
         }
 
         [HttpGet]
@@ -192,6 +202,34 @@ namespace ITsupport.Controllers
             var result = await _service.GetByIdAsync(id);
             if (!result.IsSuccess) return NotFound(result);
             return Ok(result);
+        }
+
+        // QR ma hoa link toi trang chi tiet yeu cau (quet la mo thang chi tiet/trang thai).
+        // Dung de dan len thiet bi sau khi IT xu ly xong, hoac in kem phieu.
+        [HttpGet("{id}/qrcode")]
+        public async Task<IActionResult> GetQrCode(long id)
+        {
+            var result = await _service.GetByIdAsync(id);
+            if (!result.IsSuccess) return NotFound(result);
+
+            var frontendUrl = (_configuration["School:FrontendUrl"] ?? "http://localhost:5173").TrimEnd('/');
+            var ticketUrl = $"{frontendUrl}/requests/{id}";
+            var qrBytes = _qrCodeService.GeneratePng(ticketUrl);
+
+            return File(qrBytes, "image/png");
+        }
+
+        // Phieu PDF tom tat yeu cau, kem QR - de in/dinh kem thiet bi hoac gui cho nguoi gui.
+        [HttpGet("{id}/pdf")]
+        public async Task<IActionResult> GetTicketPdf(long id)
+        {
+            var pdfBytes = await _ticketPdfService.GenerateTicketPdfAsync(id);
+            if (pdfBytes is null)
+            {
+                return NotFound(ApiResult<string>.Failure("NOT_FOUND", "Không tìm thấy yêu cầu"));
+            }
+
+            return File(pdfBytes, "application/pdf", $"phieu-yeu-cau-{id}.pdf");
         }
 
         [HttpPost]

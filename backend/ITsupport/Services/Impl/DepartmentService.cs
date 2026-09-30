@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using ITsupport.DTOs.Department;
 using ITsupport.Entities;
 using ITsupport.Models;
@@ -84,7 +85,19 @@ namespace ITsupport.Services.Impl
             }
 
             _repository.Remove(department);
-            await _repository.SaveChangesAsync();
+
+            try
+            {
+                await _repository.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                // Phong ban dang duoc User/SupportRequest tham chieu (FK Restrict) -> khong the xoa cung.
+                return ApiResult<DepartmentResponse>.Failure(
+                    "DEPARTMENT_IN_USE",
+                    "Không thể xóa phòng ban đang có người dùng hoặc yêu cầu hỗ trợ tham chiếu tới"
+                );
+            }
 
             return ApiResult<DepartmentResponse>.Success(_mapper.Map<DepartmentResponse>(department));
         }

@@ -1,0 +1,751 @@
+{
+  "info": {
+    "name": "IT Support Request Management System - API",
+    "description": "Bo test API day du, khop dung backend thuc te (backend/ITsupport), khong phai file docs/api-spec.yaml cu (da lech). Chay theo thu tu tu tren xuong (Postman Collection Runner) de di het 1 vong doi ticket. Sau khi login, token duoc tu dong luu vao bien cua collection (admin_token/employee_token/coordinator_token/leader_token/itstaff_token) - cac request khac tu dung lai, khong can copy tay.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:5219/api" },
+    { "key": "admin_token", "value": "" },
+    { "key": "employee_token", "value": "" },
+    { "key": "coordinator_token", "value": "" },
+    { "key": "leader_token", "value": "" },
+    { "key": "itstaff_token", "value": "" },
+    { "key": "request_id", "value": "1" },
+    { "key": "new_user_id", "value": "" },
+    { "key": "department_id", "value": "1" },
+    { "key": "new_department_id", "value": "" },
+    { "key": "priority_id", "value": "1" },
+    { "key": "category_id", "value": "1" },
+    { "key": "itgroup_id", "value": "1" },
+    { "key": "role_id", "value": "2" },
+    { "key": "comment_id", "value": "" },
+    { "key": "attachment_id", "value": "" },
+    { "key": "reset_token", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "0. Auth",
+      "item": [
+        {
+          "name": "Login - Admin",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const json = pm.response.json();",
+            "pm.test('login ok', () => pm.expect(json.isSuccess).to.be.true);",
+            "if (json.isSuccess) pm.collectionVariables.set('admin_token', json.data.accessToken);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/Auth/login",
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@itsupport.local\",\n  \"password\": \"Admin@123\"\n}" }
+          }
+        },
+        {
+          "name": "Login - Employee",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const json = pm.response.json();",
+            "if (json.isSuccess) pm.collectionVariables.set('employee_token', json.data.accessToken);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/Auth/login",
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"employee@itsupport.local\",\n  \"password\": \"Employee@123\"\n}" }
+          }
+        },
+        {
+          "name": "Login - Coordinator",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const json = pm.response.json();",
+            "if (json.isSuccess) pm.collectionVariables.set('coordinator_token', json.data.accessToken);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/Auth/login",
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"coordinator@itsupport.local\",\n  \"password\": \"123456\"\n}" }
+          }
+        },
+        {
+          "name": "Login - Leader",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const json = pm.response.json();",
+            "if (json.isSuccess) pm.collectionVariables.set('leader_token', json.data.accessToken);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/Auth/login",
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"leader@itsupport.local\",\n  \"password\": \"123456\"\n}" }
+          }
+        },
+        {
+          "name": "Login - IT Staff",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const json = pm.response.json();",
+            "if (json.isSuccess) pm.collectionVariables.set('itstaff_token', json.data.accessToken);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/Auth/login",
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"itstaff@itsupport.local\",\n  \"password\": \"123456\"\n}" }
+          }
+        },
+        {
+          "name": "Register (public)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/Auth/register",
+            "body": { "mode": "raw", "raw": "{\n  \"fullName\": \"Nguoi dung test\",\n  \"email\": \"newuser-{{$randomInt}}@itsupport.local\",\n  \"password\": \"Test@12345\",\n  \"confirmPassword\": \"Test@12345\"\n}" }
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const json = pm.response.json();",
+            "if (json.isSuccess && json.data.resetToken) pm.collectionVariables.set('reset_token', json.data.resetToken);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/Auth/forgot-password",
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"employee@itsupport.local\"\n}" }
+          }
+        },
+        {
+          "name": "Reset Password (dung reset_token o tren)",
+          "request": {
+            "description": "Backend bat buoc mat khau moi phai KHAC mat khau hien tai. Chi chay sach lan dau tren DB moi seed (mat khau dang la Employee@123); neu chay lai lan 2 phai sua currentPassword/newPassword cho khop trang thai hien tai.",
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/Auth/reset-password",
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"employee@itsupport.local\",\n  \"resetToken\": \"{{reset_token}}\",\n  \"newPassword\": \"Employee@123Reset\",\n  \"confirmNewPassword\": \"Employee@123Reset\"\n}" }
+          }
+        },
+        {
+          "name": "Change Password (dang nhap)",
+          "request": {
+            "description": "currentPassword phai khop mat khau vua duoc Reset Password o tren dat (Employee@123Reset).",
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{employee_token}}" }
+            ],
+            "url": "{{base_url}}/Auth/change-password",
+            "body": { "mode": "raw", "raw": "{\n  \"currentPassword\": \"Employee@123Reset\",\n  \"newPassword\": \"Employee@123\",\n  \"confirmNewPassword\": \"Employee@123\"\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Danh muc (Admin)",
+      "item": [
+        {
+          "name": "Departments - GetAll",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/Department" }
+        },
+        {
+          "name": "Departments - Create",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const json = pm.response.json();",
+            "if (json.isSuccess) pm.collectionVariables.set('new_department_id', json.data.id);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{base_url}}/Department",
+            "body": { "mode": "raw", "raw": "{\n  \"code\": \"SALES-{{$randomInt}}\",\n  \"name\": \"Kinh doanh\",\n  \"description\": \"Phong Kinh doanh\",\n  \"isActive\": true\n}" }
+          }
+        },
+        {
+          "name": "Departments - Update (phong vua tao, khong dung phong seed)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{base_url}}/Department/{{new_department_id}}",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Kinh doanh (updated)\",\n  \"description\": \"Phong Kinh doanh\",\n  \"isActive\": true\n}" }
+          }
+        },
+        {
+          "name": "Departments - Delete (phong vua tao, khong dung phong seed)",
+          "request": {
+            "description": "Xoa dung phong ban vua tao o buoc Create (new_department_id) - KHONG xoa phong ban seed dang co User/SupportRequest tham chieu, vi se bi chan boi FK Restrict va tra loi DEPARTMENT_IN_USE (400) thay vi 500.",
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{base_url}}/Department/{{new_department_id}}"
+          }
+        },
+        {
+          "name": "Roles - GetAll",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/Role" }
+        },
+        {
+          "name": "Roles - Create",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{base_url}}/Role",
+            "body": { "mode": "raw", "raw": "{\n  \"code\": \"Auditor\",\n  \"name\": \"Auditor\",\n  \"description\": \"Kiem toan noi bo\",\n  \"isActive\": true\n}" }
+          }
+        },
+        {
+          "name": "Priorities - GetAll",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/Priority" }
+        },
+        {
+          "name": "Priorities - Create",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{base_url}}/Priority",
+            "body": { "mode": "raw", "raw": "{\n  \"code\": \"CRITICAL\",\n  \"name\": \"Nghiem trong\",\n  \"level\": 5,\n  \"targetResolutionHours\": 2\n}" }
+          }
+        },
+        {
+          "name": "Priorities - Update",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{base_url}}/Priority/{{priority_id}}",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Thap (updated)\",\n  \"targetResolutionHours\": 72,\n  \"isActive\": true\n}" }
+          }
+        },
+        {
+          "name": "RequestStatuses - GetAll",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/RequestStatus" }
+        },
+        {
+          "name": "RequestCategories - GetAll",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/RequestCategory" }
+        },
+        {
+          "name": "RequestCategories - Create",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{base_url}}/RequestCategory",
+            "body": { "mode": "raw", "raw": "{\n  \"code\": \"NETWORK\",\n  \"name\": \"Mang / Internet\",\n  \"defaultITGroupId\": {{itgroup_id}},\n  \"description\": \"Loi mang, wifi, VPN\"\n}" }
+          }
+        },
+        {
+          "name": "ITGroups - GetAll",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/ITGroup" }
+        },
+        {
+          "name": "ITGroups - Create",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{base_url}}/ITGroup",
+            "body": { "mode": "raw", "raw": "{\n  \"code\": \"SECURITY\",\n  \"name\": \"Nhom Bao mat\",\n  \"description\": \"Xu ly su co bao mat\"\n}" }
+          }
+        },
+        {
+          "name": "ITGroupMembers - GetByGroup",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/ITGroupMember/group/{{itgroup_id}}" }
+        },
+        {
+          "name": "ITGroupMembers - AddMember",
+          "request": {
+            "description": "User id=3 (Coordinator seed) chua thuoc nhom nao - dung de demo them thanh vien thanh cong. User id=5 (ITStaff) da la thanh vien san cua nhom 1 tu du lieu seed, dung se tra 400 MEMBER_ALREADY_EXISTS (dung nghiep vu).",
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{base_url}}/ITGroupMember",
+            "body": { "mode": "raw", "raw": "{\n  \"itGroupId\": {{itgroup_id}},\n  \"userId\": 3,\n  \"memberRole\": \"MEMBER\",\n  \"isActive\": true\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Nguoi dung & Phan quyen (Admin)",
+      "item": [
+        {
+          "name": "Users - GetAll",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/User" }
+        },
+        {
+          "name": "Users - Create",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const json = pm.response.json();",
+            "if (json.isSuccess) pm.collectionVariables.set('new_user_id', json.data.id);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{base_url}}/User",
+            "body": { "mode": "raw", "raw": "{\n  \"fullName\": \"Nguoi dung test Postman\",\n  \"email\": \"postman-test-{{$randomInt}}@itsupport.local\",\n  \"password\": \"Test@12345\",\n  \"departmentId\": {{department_id}},\n  \"roleId\": {{role_id}}\n}" }
+          }
+        },
+        {
+          "name": "Users - GetById",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/User/{{new_user_id}}" }
+        },
+        {
+          "name": "Users - Update",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{base_url}}/User/{{new_user_id}}",
+            "body": { "mode": "raw", "raw": "{\n  \"fullName\": \"Nguoi dung test Postman (updated)\",\n  \"departmentId\": {{department_id}},\n  \"isActive\": true\n}" }
+          }
+        },
+        {
+          "name": "Users - GetRoles",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/User/{{new_user_id}}/roles" }
+        },
+        {
+          "name": "Users - UpdateRoles (UC04)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{base_url}}/User/{{new_user_id}}/roles",
+            "body": { "mode": "raw", "raw": "{\n  \"roleIds\": [3]\n}" }
+          }
+        },
+        {
+          "name": "Users - Deactivate",
+          "request": { "method": "DELETE", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/User/{{new_user_id}}" }
+        },
+        {
+          "name": "UserRole - GetByUser",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/UserRole/user/{{new_user_id}}" }
+        },
+        {
+          "name": "UserRole - Assign",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{base_url}}/UserRole/assign",
+            "body": { "mode": "raw", "raw": "{\n  \"userId\": {{new_user_id}},\n  \"roleId\": {{role_id}}\n}" }
+          }
+        },
+        {
+          "name": "UserRole - Revoke",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{base_url}}/UserRole/revoke?userId={{new_user_id}}&roleId={{role_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Vong doi Ticket (UC05-UC20)",
+      "item": [
+        {
+          "name": "UC05 - Employee tao yeu cau",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const json = pm.response.json();",
+            "pm.test('created', () => pm.expect(json.isSuccess).to.be.true);",
+            "if (json.isSuccess) pm.collectionVariables.set('request_id', json.data.id);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{employee_token}}" }],
+            "url": "{{base_url}}/SupportRequest",
+            "body": { "mode": "raw", "raw": "{\n  \"title\": \"May tinh khong vao duoc mang noi bo\",\n  \"description\": \"May tinh khong ket noi duoc mang tu sang nay.\",\n  \"priorityId\": {{priority_id}}\n}" }
+          }
+        },
+        {
+          "name": "UC22 - Employee dinh kem file (multipart)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const json = pm.response.json();",
+            "if (json.isSuccess) pm.collectionVariables.set('attachment_id', json.data.id);"
+          ] } }],
+          "request": {
+            "description": "LUU Y: o tab Body, click vao o 'File' va chon 1 file that (jpg/pdf/doc/docx, <=10MB) truoc khi Send - Postman khong the tu dinh kem file khi luu collection.",
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{employee_token}}" }],
+            "url": "{{base_url}}/RequestAttachment/upload",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "RequestId", "value": "{{request_id}}", "type": "text" },
+                { "key": "ContextType", "value": "REQUEST", "type": "text" },
+                { "key": "File", "type": "file", "src": "" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "UC08 - Admin phan cong Coordinator",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{base_url}}/RequestAssignment",
+            "body": { "mode": "raw", "raw": "{\n  \"requestId\": {{request_id}},\n  \"assignmentType\": \"COORDINATOR\",\n  \"assignedToUserId\": 3\n}" }
+          }
+        },
+        {
+          "name": "UC09 - Coordinator tiep nhan",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{coordinator_token}}" }],
+            "url": "{{base_url}}/SupportRequest/{{request_id}}/accept"
+          }
+        },
+        {
+          "name": "UC10 - Coordinator yeu cau bo sung thong tin",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{coordinator_token}}" }],
+            "url": "{{base_url}}/SupportRequest/{{request_id}}/request-info",
+            "body": { "mode": "raw", "raw": "{\n  \"message\": \"Ban cho biet ma may tinh (asset tag).\"\n}" }
+          }
+        },
+        {
+          "name": "(bo sung) Employee cung cap them thong tin",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{employee_token}}" }],
+            "url": "{{base_url}}/SupportRequest/{{request_id}}/provide-info",
+            "body": { "mode": "raw", "raw": "{\n  \"message\": \"Ma may: PC-HR-014.\"\n}" }
+          }
+        },
+        {
+          "name": "UC11 - Coordinator phan loai",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{coordinator_token}}" }],
+            "url": "{{base_url}}/SupportRequest/{{request_id}}/classify",
+            "body": { "mode": "raw", "raw": "{\n  \"categoryId\": {{category_id}},\n  \"priorityId\": {{priority_id}}\n}" }
+          }
+        },
+        {
+          "name": "UC12 - Coordinator chuyen nhom IT",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{coordinator_token}}" }],
+            "url": "{{base_url}}/RequestAssignment",
+            "body": { "mode": "raw", "raw": "{\n  \"requestId\": {{request_id}},\n  \"assignmentType\": \"IT_GROUP\",\n  \"assignedToGroupId\": {{itgroup_id}}\n}" }
+          }
+        },
+        {
+          "name": "UC13 - Leader phan cong IT Staff",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{leader_token}}" }],
+            "url": "{{base_url}}/RequestAssignment",
+            "body": { "mode": "raw", "raw": "{\n  \"requestId\": {{request_id}},\n  \"assignmentType\": \"IT_STAFF\",\n  \"assignedToUserId\": 5,\n  \"expectedCompletionAt\": \"2026-12-31T00:00:00Z\"\n}" }
+          }
+        },
+        {
+          "name": "UC14 - IT Staff nhan xu ly",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{itstaff_token}}" }],
+            "url": "{{base_url}}/SupportRequest/{{request_id}}/accept-handling"
+          }
+        },
+        {
+          "name": "UC15 - IT Staff cap nhat tien do",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{itstaff_token}}" }],
+            "url": "{{base_url}}/RequestProgress",
+            "body": { "mode": "raw", "raw": "{\n  \"requestId\": {{request_id}},\n  \"progressContent\": \"Da kiem tra cap mang, dang thay day RJ45.\"\n}" }
+          }
+        },
+        {
+          "name": "UC16 - IT Staff hoan thanh xu ly",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{itstaff_token}}" }],
+            "url": "{{base_url}}/SupportRequest/{{request_id}}/complete-handling"
+          }
+        },
+        {
+          "name": "UC17 - Coordinator kiem tra noi bo: DAT",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{coordinator_token}}" }],
+            "url": "{{base_url}}/SupportRequest/{{request_id}}/internal-review-pass"
+          }
+        },
+        {
+          "name": "UC19 - Employee xac nhan hoan thanh",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{employee_token}}" }],
+            "url": "{{base_url}}/SupportRequest/{{request_id}}/confirm-completion"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3b. Nhanh REWORK va tu choi (UC18, UC20 - ticket rieng, chay doc lap)",
+      "description": "Tao 1 ticket moi va di qua het 2 nhanh re trong workflow (UC18 kiem tra khong dat, UC20 nguoi dung tu choi) - khong the gop chung voi luong happy-path o folder 3 vi ticket o do da COMPLETED (dong), goi lai se bi 400 dung nghia vu (sai trang thai nguon).",
+      "item": [
+        {
+          "name": "01. Employee tao yeu cau (ticket rieng cho nhanh REWORK)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const json = pm.response.json();",
+            "if (json.isSuccess) pm.collectionVariables.set('request_id', json.data.id);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{employee_token}}" }],
+            "url": "{{base_url}}/SupportRequest",
+            "body": { "mode": "raw", "raw": "{\n  \"title\": \"Test nhanh REWORK\",\n  \"description\": \"Ticket rieng de test UC18/UC20.\",\n  \"priorityId\": {{priority_id}}\n}" }
+          }
+        },
+        {
+          "name": "02. Admin phan cong Coordinator",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{base_url}}/RequestAssignment",
+            "body": { "mode": "raw", "raw": "{\n  \"requestId\": {{request_id}},\n  \"assignmentType\": \"COORDINATOR\",\n  \"assignedToUserId\": 3\n}" }
+          }
+        },
+        {
+          "name": "03. Coordinator tiep nhan",
+          "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{coordinator_token}}" }], "url": "{{base_url}}/SupportRequest/{{request_id}}/accept" }
+        },
+        {
+          "name": "04. Coordinator phan loai",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{coordinator_token}}" }],
+            "url": "{{base_url}}/SupportRequest/{{request_id}}/classify",
+            "body": { "mode": "raw", "raw": "{\n  \"categoryId\": {{category_id}},\n  \"priorityId\": {{priority_id}}\n}" }
+          }
+        },
+        {
+          "name": "05. Coordinator chuyen nhom IT",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{coordinator_token}}" }],
+            "url": "{{base_url}}/RequestAssignment",
+            "body": { "mode": "raw", "raw": "{\n  \"requestId\": {{request_id}},\n  \"assignmentType\": \"IT_GROUP\",\n  \"assignedToGroupId\": {{itgroup_id}}\n}" }
+          }
+        },
+        {
+          "name": "06. Leader phan cong IT Staff",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{leader_token}}" }],
+            "url": "{{base_url}}/RequestAssignment",
+            "body": { "mode": "raw", "raw": "{\n  \"requestId\": {{request_id}},\n  \"assignmentType\": \"IT_STAFF\",\n  \"assignedToUserId\": 5\n}" }
+          }
+        },
+        {
+          "name": "07. IT Staff nhan xu ly",
+          "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{itstaff_token}}" }], "url": "{{base_url}}/SupportRequest/{{request_id}}/accept-handling" }
+        },
+        {
+          "name": "08. IT Staff hoan thanh xu ly (lan 1)",
+          "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{itstaff_token}}" }], "url": "{{base_url}}/SupportRequest/{{request_id}}/complete-handling" }
+        },
+        {
+          "name": "09. UC18 - Coordinator kiem tra noi bo: KHONG DAT -> REWORK",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{coordinator_token}}" }],
+            "url": "{{base_url}}/SupportRequest/{{request_id}}/internal-review-fail",
+            "body": { "mode": "raw", "raw": "{\n  \"reason\": \"May van con loi, can kiem tra lai.\"\n}" }
+          }
+        },
+        {
+          "name": "10. IT Staff tiep tuc xu ly lai (REWORK -> IN_PROGRESS)",
+          "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{itstaff_token}}" }], "url": "{{base_url}}/SupportRequest/{{request_id}}/start-rework" }
+        },
+        {
+          "name": "11. IT Staff hoan thanh xu ly (lan 2)",
+          "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{itstaff_token}}" }], "url": "{{base_url}}/SupportRequest/{{request_id}}/complete-handling" }
+        },
+        {
+          "name": "12. Coordinator kiem tra noi bo: DAT",
+          "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{coordinator_token}}" }], "url": "{{base_url}}/SupportRequest/{{request_id}}/internal-review-pass" }
+        },
+        {
+          "name": "13. UC20 - Employee phan hoi CHUA DAT -> REWORK",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{employee_token}}" }],
+            "url": "{{base_url}}/SupportRequest/{{request_id}}/reject-completion",
+            "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Van chua vao duoc mang.\"\n}" }
+          }
+        },
+        {
+          "name": "14. IT Staff tiep tuc xu ly lai (lan 2)",
+          "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{itstaff_token}}" }], "url": "{{base_url}}/SupportRequest/{{request_id}}/start-rework" }
+        },
+        {
+          "name": "15. IT Staff hoan thanh xu ly (lan 3)",
+          "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{itstaff_token}}" }], "url": "{{base_url}}/SupportRequest/{{request_id}}/complete-handling" }
+        },
+        {
+          "name": "16. Coordinator kiem tra noi bo: DAT (lan 2)",
+          "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{coordinator_token}}" }], "url": "{{base_url}}/SupportRequest/{{request_id}}/internal-review-pass" }
+        },
+        {
+          "name": "17. Employee xac nhan hoan thanh (dong ticket)",
+          "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{employee_token}}" }], "url": "{{base_url}}/SupportRequest/{{request_id}}/confirm-completion" }
+        }
+      ]
+    },
+    {
+      "name": "4. Xem danh sach / chi tiet (UC06-UC07, UC28)",
+      "item": [
+        {
+          "name": "GetAll (Admin, ho tro search/filter/sort)",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/SupportRequest?Keyword=&SortBy=createdat&SortDirection=desc&Page=1&PageSize=10" }
+        },
+        {
+          "name": "My requests (Employee)",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{employee_token}}" }], "url": "{{base_url}}/SupportRequest/my" }
+        },
+        {
+          "name": "Coordinator queue",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{coordinator_token}}" }], "url": "{{base_url}}/SupportRequest/coordinator" }
+        },
+        {
+          "name": "Assigned to me (IT Staff)",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{itstaff_token}}" }], "url": "{{base_url}}/SupportRequest/assigned" }
+        },
+        {
+          "name": "Team requests (Leader)",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{leader_token}}" }], "url": "{{base_url}}/SupportRequest/team" }
+        },
+        {
+          "name": "GetById",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/SupportRequest/{{request_id}}" }
+        }
+      ]
+    },
+    {
+      "name": "5. Binh luan, Dinh kem, Lich su, Phan cong (UC21-UC23)",
+      "item": [
+        {
+          "name": "Comments - GetByRequest",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/RequestComment/request/{{request_id}}" }
+        },
+        {
+          "name": "Comments - Create",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const json = pm.response.json();",
+            "if (json.isSuccess) pm.collectionVariables.set('comment_id', json.data.id);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{employee_token}}" }],
+            "url": "{{base_url}}/RequestComment",
+            "body": { "mode": "raw", "raw": "{\n  \"requestId\": {{request_id}},\n  \"content\": \"Khi nao xong ạ?\"\n}" }
+          }
+        },
+        {
+          "name": "Comments - Update",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{employee_token}}" }],
+            "url": "{{base_url}}/RequestComment/{{comment_id}}",
+            "body": { "mode": "raw", "raw": "{\n  \"content\": \"Khi nao xong a? (da cap nhat)\"\n}" }
+          }
+        },
+        {
+          "name": "Comments - Delete",
+          "request": { "method": "DELETE", "header": [{ "key": "Authorization", "value": "Bearer {{employee_token}}" }], "url": "{{base_url}}/RequestComment/{{comment_id}}" }
+        },
+        {
+          "name": "Attachments - GetByRequest",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/RequestAttachment/request/{{request_id}}" }
+        },
+        {
+          "name": "Attachments - Download by id",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/RequestAttachment/download/{{attachment_id}}" }
+        },
+        {
+          "name": "History - GetByRequest (UC23)",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/RequestHistory/request/{{request_id}}" }
+        },
+        {
+          "name": "History - Log thu cong",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{base_url}}/RequestHistory",
+            "body": { "mode": "raw", "raw": "{\n  \"requestId\": {{request_id}},\n  \"actionCode\": \"NOTE\",\n  \"description\": \"Ghi chu thu cong tu Postman.\"\n}" }
+          }
+        },
+        {
+          "name": "Assignments - GetByRequest",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/RequestAssignment/request/{{request_id}}" }
+        }
+      ]
+    },
+    {
+      "name": "6. Reports (UC29, moi)",
+      "item": [
+        {
+          "name": "Summary tong hop",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/Report/summary" }
+        },
+        {
+          "name": "Summary co loc theo ngay + phong ban",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/Report/summary?FromDate=2026-01-01&ToDate=2026-12-31&DepartmentId={{department_id}}" }
+        },
+        {
+          "name": "Xuat Excel (tai file .xlsx)",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/Report/export/excel" }
+        }
+      ]
+    },
+    {
+      "name": "7. QR & Phieu PDF (moi)",
+      "item": [
+        {
+          "name": "QR code cua ticket (PNG)",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/SupportRequest/{{request_id}}/qrcode" }
+        },
+        {
+          "name": "Phieu PDF (kem QR)",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/SupportRequest/{{request_id}}/pdf" }
+        }
+      ]
+    },
+    {
+      "name": "8. Email Notifications (UC24, Admin)",
+      "item": [
+        {
+          "name": "GetAll",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/EmailNotification" }
+        },
+        {
+          "name": "Queue email thu cong",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{base_url}}/EmailNotification/queue",
+            "body": { "mode": "raw", "raw": "{\n  \"requestId\": {{request_id}},\n  \"recipientEmail\": \"employee@itsupport.local\",\n  \"eventCode\": \"TEST\",\n  \"subject\": \"Email test tu Postman\"\n}" }
+          }
+        },
+        {
+          "name": "Process queue (gui email dang PENDING)",
+          "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/EmailNotification/process-queue" }
+        }
+      ]
+    },
+    {
+      "name": "9. Upload file chung (khong lien quan ticket)",
+      "item": [
+        {
+          "name": "FileStorage - Upload",
+          "request": {
+            "description": "LUU Y: chon 1 file that o tab Body truoc khi Send (endpoint nay khong thuoc quy trinh xu ly ticket, FE hien khong dung).",
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{base_url}}/files/upload?folder=common",
+            "body": {
+              "mode": "formdata",
+              "formdata": [{ "key": "file", "type": "file", "src": "" }]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
