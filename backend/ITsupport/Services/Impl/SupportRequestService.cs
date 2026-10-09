@@ -852,29 +852,36 @@ namespace ITsupport.Services.Impl
                                     )
                                 )
                                 {
-                                    await _firebaseNotificationService
-                                        .SendToDeviceAsync(
+
+                                    var fcmSent =
+                                        await _firebaseNotificationService.SendToDeviceAsync(
                                             assignedUser.FcmToken,
                                             "Bạn có yêu cầu hỗ trợ mới",
                                             $"Yêu cầu {entity.RequestCode} đã được phân công cho bạn.",
                                             new Dictionary<string, string>
                                             {
-                    {
-                        "requestId",
-                        entity.Id.ToString()
-                    },
-                    {
-                        "type",
-                        "NEW_ASSIGNMENT"
-                    }
+            { "requestId", entity.Id.ToString() },
+            { "type", "NEW_ASSIGNMENT" }
                                             }
                                         );
 
-                                    _logger.LogInformation(
-                                        "FCM sent after auto assignment. RequestId={RequestId}, ITStaffUserId={ITStaffUserId}",
-                                        entity.Id,
-                                        selectedITStaffId.Value
-                                    );
+                                    if (fcmSent)
+                                    {
+                                        _logger.LogInformation(
+                                            "FCM sent after auto assignment. RequestId={RequestId}, ITStaffUserId={ITStaffUserId}",
+                                            entity.Id,
+                                            selectedITStaffId.Value
+                                        );
+                                    }
+                                    else
+                                    {
+                                        _logger.LogWarning(
+                                            "FCM FAILED after auto assignment. RequestId={RequestId}, ITStaffUserId={ITStaffUserId}",
+                                            entity.Id,
+                                            selectedITStaffId.Value
+                                        );
+                                    }
+
                                 }
                                 else
                                 {
