@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
+import '../app.dart';
 import '../services/api_service.dart';
 import 'request_list_screen.dart';
 
@@ -40,6 +42,36 @@ class _LoginScreenState extends State<LoginScreen> {
         email: _emailController.text,
         password: _passwordController.text,
       );
+
+      isLoggedIn = true;
+
+      // Sau khi đăng nhập thành công,
+      // lấy FCM token của thiết bị và gửi lên Backend.
+      try {
+        final fcmToken =
+            await FirebaseMessaging.instance.getToken();
+
+        if (fcmToken != null &&
+            fcmToken.trim().isNotEmpty) {
+          await ApiService.updateFcmToken(
+            fcmToken,
+          );
+
+          debugPrint(
+            'FCM token đã gửi lên Backend thành công.',
+          );
+        } else {
+          debugPrint(
+            'Không lấy được FCM token.',
+          );
+        }
+      } catch (e) {
+        // Không chặn đăng nhập nếu riêng việc
+        // cập nhật FCM token gặp lỗi.
+        debugPrint(
+          'Lỗi cập nhật FCM token: $e',
+        );
+      }
 
       if (!mounted) return;
 

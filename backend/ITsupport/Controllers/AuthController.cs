@@ -251,5 +251,52 @@ namespace ITsupport.Controllers
                 result
             );
         }
+
+        // =========================================================
+        // UPDATE FCM TOKEN
+        //
+        // POST /api/Auth/fcm-token
+        // Login required
+        // =========================================================
+
+        [HttpPost("fcm-token")]
+        [Authorize]
+        public async Task<ActionResult<ApiResult<string>>> UpdateFcmToken(
+            [FromBody] UpdateFcmTokenRequest request
+        )
+        {
+            var userIdValue =
+                User.FindFirstValue(
+                    ClaimTypes.NameIdentifier
+                );
+
+            if (
+                !int.TryParse(
+                    userIdValue,
+                    out var userId
+                )
+            )
+            {
+                return Unauthorized(
+                    ApiResult<string>.Failure(
+                        "INVALID_USER",
+                        "Không xác định được người dùng đăng nhập"
+                    )
+                );
+            }
+
+            var result =
+                await _authService.UpdateFcmTokenAsync(
+                    userId,
+                    request.Token
+                );
+
+            if (!result.IsSuccess)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+        }
     }
 }

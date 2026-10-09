@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "526895186410",
+    "project_id": "itsupport-request-management",
+    "storage_bucket": "itsupport-request-management.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:526895186410:android:70d47eb6334c96704ab293",
+        "android_client_info": {
+          "package_name": "com.example.itstaff_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAffrYDlGtxd5eHF7EsT-q6pKFBLSdn7NE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

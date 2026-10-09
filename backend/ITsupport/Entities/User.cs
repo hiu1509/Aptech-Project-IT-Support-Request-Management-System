@@ -25,6 +25,11 @@ namespace ITsupport.Entities
         public string Email { get; set; }
             = string.Empty;
 
+        [MaxLength(20)]
+        public string? PhoneNumber { get; set; }
+
+        [MaxLength(500)]
+        public string? FcmToken { get; set; }
 
         [Required]
         [MaxLength(500)]

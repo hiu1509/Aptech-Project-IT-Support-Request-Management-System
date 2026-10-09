@@ -34,5 +34,11 @@ namespace ITsupport.Services
             ResetPasswordAsync(
                 ResetPasswordRequest request
             );
+
+        Task<ApiResult<string>>
+            UpdateFcmTokenAsync(
+                int userId,
+                string fcmToken
+            );
     }
 }

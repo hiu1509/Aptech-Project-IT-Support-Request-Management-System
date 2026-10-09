@@ -18,6 +18,7 @@ namespace ITsupport.Services.Impl
         private readonly ILogger<SupportRequestService> _logger;
         private readonly IMapper _mapper;
         private readonly IEmailNotificationService _emailNotificationService;
+        private readonly IFirebaseNotificationService _firebaseNotificationService;
 
 
         public SupportRequestService(
@@ -26,7 +27,8 @@ namespace ITsupport.Services.Impl
             ITsupportDbContext context,
             ILogger<SupportRequestService> logger,
             IMapper mapper,
-            IEmailNotificationService emailNotificationService
+            IEmailNotificationService emailNotificationService,
+            IFirebaseNotificationService firebaseNotificationService
         )
         {
             _repository = repository;
@@ -35,6 +37,7 @@ namespace ITsupport.Services.Impl
             _logger = logger;
             _mapper = mapper;
             _emailNotificationService = emailNotificationService;
+            _firebaseNotificationService = firebaseNotificationService;
         }
 
 
@@ -199,6 +202,138 @@ namespace ITsupport.Services.Impl
                 .FirstOrDefaultAsync(r => r.Id == id);
         }
 
+        // =========================================================
+        // FIND LEAST BUSY IT STAFF
+        // =========================================================
+
+        private async Task<int?> FindLeastBusyITStaffAsync(
+            int itGroupId
+        )
+        {
+            // Các trạng thái vẫn được tính là công việc đang
+            // thuộc trách nhiệm của IT Staff.
+            var activeStatusCodes =
+                new[]
+                {
+            "ASSIGNED",
+            "IN_PROGRESS",
+            "WAITING_USER_CONFIRMATION",
+            "REWORK"
+                };
+
+
+            // -----------------------------------------------------
+            // GET ELIGIBLE IT STAFF IN GROUP
+            // -----------------------------------------------------
+
+            var staffIds =
+                await (
+                    from member in _context.ITGroupMembers
+
+                    join user in _context.Users
+                        on member.UserId equals user.Id
+
+                    join userRole in _context.UserRoles
+                        on user.Id equals userRole.UserId
+
+                    join role in _context.Roles
+                        on userRole.RoleId equals role.Id
+
+                    where
+                        member.ITGroupId == itGroupId
+                        &&
+                        member.IsActive
+                        &&
+                        member.MemberRole == "MEMBER"
+                        &&
+                        user.IsActive
+                        &&
+                        role.Code == "ITStaff"
+
+                    select user.Id
+                )
+                .Distinct()
+                .ToListAsync();
+
+
+            if (staffIds.Count == 0)
+            {
+                _logger.LogWarning(
+                    "Không tìm thấy IT Staff hợp lệ trong ITGroupId={ITGroupId}.",
+                    itGroupId
+                );
+
+                return null;
+            }
+
+
+            // -----------------------------------------------------
+            // CALCULATE CURRENT WORKLOAD
+            // -----------------------------------------------------
+
+            var workloadCounts =
+                await (
+                    from supportRequest in _context.SupportRequests
+
+                    join status in _context.RequestStatuses
+                        on supportRequest.StatusId equals status.Id
+
+                    where
+                        supportRequest.CurrentAssigneeId.HasValue
+                        &&
+                        staffIds.Contains(
+                            supportRequest.CurrentAssigneeId.Value
+                        )
+                        &&
+                        activeStatusCodes.Contains(
+                            status.Code
+                        )
+
+                    group supportRequest
+                        by supportRequest.CurrentAssigneeId.Value
+                        into workloadGroup
+
+                    select new
+                    {
+                        UserId = workloadGroup.Key,
+                        ActiveRequestCount = workloadGroup.Count()
+                    }
+                )
+                .ToListAsync();
+
+
+            // -----------------------------------------------------
+            // SELECT LEAST BUSY STAFF
+            // -----------------------------------------------------
+
+            var selectedStaffId =
+                staffIds
+                    .Select(userId => new
+                    {
+                        UserId = userId,
+
+                        ActiveRequestCount =
+                            workloadCounts
+                                .FirstOrDefault(
+                                    w => w.UserId == userId
+                                )
+                                ?.ActiveRequestCount ?? 0
+                    })
+                    .OrderBy(x => x.ActiveRequestCount)
+                    .ThenBy(x => x.UserId)
+                    .First();
+
+
+            _logger.LogInformation(
+                "Auto assignment selected IT Staff. ITGroupId={ITGroupId}, UserId={UserId}, ActiveRequestCount={ActiveRequestCount}",
+                itGroupId,
+                selectedStaffId.UserId,
+                selectedStaffId.ActiveRequestCount
+            );
+
+
+            return selectedStaffId.UserId;
+        }
 
         // =========================================================
         // GET ALL
@@ -602,6 +737,205 @@ namespace ITsupport.Services.Impl
             await _repository
                 .SaveChangesAsync();
 
+            // -----------------------------------------------------
+            // AUTO ASSIGN TO IT STAFF
+            // -----------------------------------------------------
+
+            try
+            {
+                // Lấy Category và IT Group mặc định đã cấu hình.
+                var category =
+                    await _context.RequestCategories
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(
+                            c => c.Id == entity.CategoryId
+                        );
+
+                if (
+                    category != null &&
+                    category.DefaultITGroupId.HasValue
+                )
+                {
+                    var itGroupId =
+                        category.DefaultITGroupId.Value;
+
+
+                    // Tìm IT Staff có workload thấp nhất trong group.
+                    var selectedITStaffId =
+                        await FindLeastBusyITStaffAsync(
+                            itGroupId
+                        );
+
+
+                    if (selectedITStaffId.HasValue)
+                    {
+                        var assignedStatus =
+                            await _context.RequestStatuses
+                                .FirstOrDefaultAsync(
+                                    s => s.Code == "ASSIGNED"
+                                );
+
+
+                        if (assignedStatus != null)
+                        {
+                            var now =
+                                DateTime.UtcNow;
+
+
+                            // Gán trực tiếp request cho Group + IT Staff.
+                            entity.CurrentITGroupId =
+                                itGroupId;
+
+                            entity.CurrentAssigneeId =
+                                selectedITStaffId.Value;
+
+                            entity.StatusId =
+                                assignedStatus.Id;
+
+                            entity.UpdatedAt =
+                                now;
+
+
+                            // Lưu lịch sử phân công.
+                            var history =
+                                new RequestHistory
+                                {
+                                    RequestId =
+                                        entity.Id,
+
+                                    ActionCode =
+                                        "AUTO_ASSIGN_IT_STAFF",
+
+                                    FromStatusId =
+                                        newStatus.Id,
+
+                                    ToStatusId =
+                                        assignedStatus.Id,
+
+                                    // Đây là phân công tự động bởi hệ thống,
+                                    // không phải thao tác của IT Team Lead.
+                                    PerformedByUserId =
+                                        null,
+
+                                    Description =
+                                        $"System automatically assigned request to IT Staff UserId={selectedITStaffId.Value} in ITGroupId={itGroupId}.",
+
+                                    CreatedAt =
+                                        now
+                                };
+
+
+                            _context.RequestHistories.Add(
+                                history
+                            );
+
+
+                            await _context.SaveChangesAsync();
+
+                            // -----------------------------------------------------
+                            // SEND FCM TO AUTO-ASSIGNED IT STAFF
+                            // -----------------------------------------------------
+
+                            try
+                            {
+                                var assignedUser =
+                                    await _context.Users
+                                        .AsNoTracking()
+                                        .FirstOrDefaultAsync(
+                                            u => u.Id == selectedITStaffId.Value
+                                        );
+
+                                if (
+                                    assignedUser != null &&
+                                    !string.IsNullOrWhiteSpace(
+                                        assignedUser.FcmToken
+                                    )
+                                )
+                                {
+                                    await _firebaseNotificationService
+                                        .SendToDeviceAsync(
+                                            assignedUser.FcmToken,
+                                            "Bạn có yêu cầu hỗ trợ mới",
+                                            $"Yêu cầu {entity.RequestCode} đã được phân công cho bạn.",
+                                            new Dictionary<string, string>
+                                            {
+                    {
+                        "requestId",
+                        entity.Id.ToString()
+                    },
+                    {
+                        "type",
+                        "NEW_ASSIGNMENT"
+                    }
+                                            }
+                                        );
+
+                                    _logger.LogInformation(
+                                        "FCM sent after auto assignment. RequestId={RequestId}, ITStaffUserId={ITStaffUserId}",
+                                        entity.Id,
+                                        selectedITStaffId.Value
+                                    );
+                                }
+                                else
+                                {
+                                    _logger.LogWarning(
+                                        "Không gửi FCM vì IT Staff UserId={UserId} chưa có FcmToken. RequestId={RequestId}",
+                                        selectedITStaffId.Value,
+                                        entity.Id
+                                    );
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogError(
+                                    ex,
+                                    "Lỗi gửi FCM sau auto assignment. RequestId={RequestId}",
+                                    entity.Id
+                                );
+                            }
+
+                            _logger.LogInformation(
+                                "Request automatically assigned. RequestId={RequestId}, ITGroupId={ITGroupId}, ITStaffUserId={ITStaffUserId}",
+                                entity.Id,
+                                itGroupId,
+                                selectedITStaffId.Value
+                            );
+                        }
+                        else
+                        {
+                            _logger.LogError(
+                                "Auto assignment skipped because ASSIGNED status was not found. RequestId={RequestId}",
+                                entity.Id
+                            );
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogWarning(
+                            "Auto assignment skipped because no eligible IT Staff was found. RequestId={RequestId}, ITGroupId={ITGroupId}",
+                            entity.Id,
+                            itGroupId
+                        );
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning(
+                        "Auto assignment skipped because Category has no DefaultITGroupId. RequestId={RequestId}, CategoryId={CategoryId}",
+                        entity.Id,
+                        entity.CategoryId
+                    );
+                }
+            }
+            catch (Exception ex)
+            {
+                // Không làm Employee mất request nếu auto-assignment gặp lỗi.
+                _logger.LogError(
+                    ex,
+                    "Auto assignment failed. RequestId={RequestId}",
+                    entity.Id
+                );
+            }
 
             _logger.LogInformation(
                 "Support request created. RequestId={RequestId}, RequestCode={RequestCode}, RequesterId={RequesterId}",

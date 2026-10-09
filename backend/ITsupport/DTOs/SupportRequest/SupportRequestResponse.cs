@@ -21,6 +21,8 @@
 
         public string? RequesterEmail { get; set; }
 
+        public string? RequesterPhone { get; set; }
+
 
         // =========================================================
         // CATEGORY

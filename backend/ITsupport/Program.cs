@@ -1,3 +1,5 @@
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
 using ITsupport.Data;
 using ITsupport.Entities;
 using ITsupport.Mappings;
@@ -110,6 +112,7 @@ builder.Services.AddScoped<IRequestAttachmentService, RequestAttachmentService>(
 builder.Services.AddScoped<IRequestHistoryService, RequestHistoryService>();
 builder.Services.AddScoped<IEmailNotificationService, EmailNotificationService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IFirebaseNotificationService,FirebaseNotificationService>();
 
 
 // =========================================================
@@ -211,6 +214,39 @@ builder.Services.AddAutoMapper(
     typeof(UserProfile),
     typeof(UserRoleProfile)
 );
+
+
+// =========================================================
+// Firebase Admin
+// =========================================================
+
+var firebaseCredentialPath =
+    Path.Combine(
+        builder.Environment.ContentRootPath,
+        "Firebase",
+        "firebase-service-account.json"
+    );
+
+if (!File.Exists(firebaseCredentialPath))
+{
+    throw new FileNotFoundException(
+        "Không tìm thấy Firebase service account.",
+        firebaseCredentialPath
+    );
+}
+
+if (FirebaseApp.DefaultInstance == null)
+{
+    FirebaseApp.Create(
+        new AppOptions
+        {
+            Credential =
+                GoogleCredential.FromFile(
+                    firebaseCredentialPath
+                )
+        }
+    );
+}
 
 
 // =========================================================

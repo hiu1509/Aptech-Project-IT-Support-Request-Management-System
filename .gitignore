@@ -480,3 +480,13 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Firebase Admin private key - DO NOT COMMIT
+backend/ITsupport/Firebase/firebase-service-account.json
+
+# Uploaded files
+backend/ITsupport/wwwroot/uploads/tickets/
+
+# Local Flutter settings
+mobile/itstaff_app/.vscode/
+mobile/itstaff_app/firebase.json

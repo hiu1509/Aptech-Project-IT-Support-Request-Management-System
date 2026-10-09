@@ -175,6 +175,80 @@ class ApiService {
     );
   }
 
+  static Future<void> updateFcmToken(
+    String fcmToken,
+  ) async {
+    try {
+      final token = await getAccessToken();
+
+      if (token == null || token.trim().isEmpty) {
+        throw Exception(
+          'Không tìm thấy phiên đăng nhập. Vui lòng đăng nhập lại.',
+        );
+      }
+
+      if (fcmToken.trim().isEmpty) {
+        throw Exception(
+          'FCM token không hợp lệ.',
+        );
+      }
+
+      final response = await _dio.post(
+        '/Auth/fcm-token',
+        data: {
+          'token': fcmToken.trim(),
+        },
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+
+      final responseData = response.data;
+
+      if (responseData is! Map) {
+        throw Exception(
+          'Phản hồi từ máy chủ không hợp lệ.',
+        );
+      }
+
+      final result =
+          Map<String, dynamic>.from(responseData);
+
+      if (result['isSuccess'] != true) {
+        throw Exception(
+          result['message'] ??
+              result['errorCode'] ??
+              'Không thể cập nhật FCM token.',
+        );
+      }
+    } on DioException catch (e) {
+      final data = e.response?.data;
+
+      if (data is Map) {
+        final message = data['message'];
+
+        if (message != null &&
+            message.toString().trim().isNotEmpty) {
+          throw Exception(
+            message.toString(),
+          );
+        }
+      }
+
+      if (e.response?.statusCode == 401) {
+        throw Exception(
+          'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
+        );
+      }
+
+      throw Exception(
+        'Không thể cập nhật FCM token.',
+      );
+    }
+  }
+
   static Future<bool> hasToken() async {
     final token = await getAccessToken();
 
@@ -304,6 +378,44 @@ class ApiService {
 
       throw Exception(
         'Không thể tải danh sách công việc.',
+      );
+    }
+  }
+
+  // ============================================================
+  // GET REQUEST BY ID
+  // Dùng khi mở yêu cầu từ FCM notification
+  // ============================================================
+
+  static Future<RequestModel> getRequestById(
+    int requestId,
+  ) async {
+    try {
+      final token = await getAccessToken();
+
+      if (token == null || token.trim().isEmpty) {
+        throw Exception(
+          'Không tìm thấy phiên đăng nhập. Vui lòng đăng nhập lại.',
+        );
+      }
+
+      final response = await _dio.get(
+        '/SupportRequest/$requestId',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+
+      return _parseRequestResponse(
+        response,
+        defaultError: 'Không thể tải thông tin yêu cầu.',
+      );
+    } on DioException catch (e) {
+      throw _handleRequestDioException(
+        e,
+        defaultError: 'Không thể tải thông tin yêu cầu.',
       );
     }
   }

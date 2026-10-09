@@ -14,19 +14,23 @@ namespace ITsupport.Services.Impl
         private readonly ITsupportDbContext _context;
         private readonly ILogger<RequestAssignmentService> _logger;
         private readonly IMapper _mapper;
+        private readonly IFirebaseNotificationService _firebaseNotificationService;
+
 
 
         public RequestAssignmentService(
-            IRequestAssignmentRepository assignmentRepository,
-            ITsupportDbContext context,
-            ILogger<RequestAssignmentService> logger,
-            IMapper mapper)
-        {
-            _assignmentRepository = assignmentRepository;
-            _context = context;
-            _logger = logger;
-            _mapper = mapper;
-        }
+        IRequestAssignmentRepository assignmentRepository,
+        ITsupportDbContext context,
+        ILogger<RequestAssignmentService> logger,
+        IMapper mapper,
+        IFirebaseNotificationService firebaseNotificationService)
+            {
+                _assignmentRepository = assignmentRepository;
+                _context = context;
+                _logger = logger;
+                _mapper = mapper;
+                _firebaseNotificationService = firebaseNotificationService;
+            }
 
 
         // =========================================================
@@ -554,7 +558,70 @@ namespace ITsupport.Services.Impl
             await _context.SaveChangesAsync();
 
 
-            _logger.LogInformation(
+            // -----------------------------------------------------
+            // SEND FCM NOTIFICATION TO IT STAFF
+            // -----------------------------------------------------
+
+            if (
+                    type == "IT_STAFF" &&
+                    request.AssignedToUserId.HasValue
+                )
+                {
+                    try
+                    {
+                        var assignedUser =
+                            await _context.Users
+                                .AsNoTracking()
+                                .FirstOrDefaultAsync(
+                                    u => u.Id ==
+                                        request.AssignedToUserId.Value
+                                );
+
+                        if (
+                            assignedUser != null &&
+                            !string.IsNullOrWhiteSpace(
+                                assignedUser.FcmToken
+                            )
+                        )
+                        {
+                            await _firebaseNotificationService
+                                .SendToDeviceAsync(
+                                    assignedUser.FcmToken,
+                                    "Bạn có yêu cầu hỗ trợ mới",
+                                    $"Yêu cầu #{supportRequest.Id} đã được phân công cho bạn.",
+                                    new Dictionary<string, string>
+                                    {
+                            {
+                                "requestId",
+                                supportRequest.Id.ToString()
+                            },
+                            {
+                                "type",
+                                "NEW_ASSIGNMENT"
+                            }
+                                    }
+                                );
+                        }
+                        else
+                        {
+                            _logger.LogWarning(
+                                "Không gửi FCM cho RequestId={RequestId} vì IT Staff UserId={UserId} chưa có FcmToken.",
+                                supportRequest.Id,
+                                request.AssignedToUserId.Value
+                            );
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(
+                            ex,
+                            "Lỗi gửi FCM sau khi phân công RequestId={RequestId}.",
+                            supportRequest.Id
+                        );
+                    }
+                }
+
+                        _logger.LogInformation(
                 "Assignment successful: RequestId={RequestId}, Type={Type}, FromStatus={FromStatus}, ToStatusId={ToStatusId}",
                 request.RequestId,
                 type,

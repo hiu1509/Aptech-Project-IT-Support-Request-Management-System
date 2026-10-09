@@ -768,6 +768,75 @@ namespace ITsupport.Services.Impl
                 );
         }
 
+        // =========================================================
+        // UPDATE FCM TOKEN
+        // =========================================================
+
+        public async Task<ApiResult<string>>
+            UpdateFcmTokenAsync(
+                int userId,
+                string fcmToken
+            )
+        {
+            if (string.IsNullOrWhiteSpace(fcmToken))
+            {
+                return ApiResult<string>
+                    .Failure(
+                        "FCM_TOKEN_REQUIRED",
+                        "FCM token không được để trống"
+                    );
+            }
+
+
+            var user =
+                await _userRepository
+                    .GetByIdAsync(
+                        userId
+                    );
+
+
+            if (user is null)
+            {
+                return ApiResult<string>
+                    .Failure(
+                        "USER_NOT_FOUND",
+                        "Không tìm thấy tài khoản người dùng"
+                    );
+            }
+
+
+            if (!user.IsActive)
+            {
+                return ApiResult<string>
+                    .Failure(
+                        "USER_NOT_ACTIVE",
+                        "Tài khoản đã ngừng hoạt động"
+                    );
+            }
+
+
+            user.FcmToken =
+                fcmToken.Trim();
+
+            user.UpdatedAt =
+                DateTime.UtcNow;
+
+
+            await _userRepository
+                .SaveChangesAsync();
+
+
+            _logger.LogInformation(
+                "FCM token updated successfully. UserId={UserId}",
+                user.Id
+            );
+
+
+            return ApiResult<string>
+                .Success(
+                    "FCM token updated successfully."
+                );
+        }
 
         // =========================================================
         // HASH RESET TOKEN

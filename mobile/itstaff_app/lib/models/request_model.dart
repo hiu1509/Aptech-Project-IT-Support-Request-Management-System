@@ -7,6 +7,7 @@ class RequestModel {
   final int requesterId;
   final String? requesterName;
   final String? requesterEmail;
+  final String? requesterPhone;
 
   final int? categoryId;
   final String? categoryName;
@@ -37,6 +38,7 @@ class RequestModel {
     required this.requesterId,
     this.requesterName,
     this.requesterEmail,
+    this.requesterPhone,
     this.categoryId,
     this.categoryName,
     required this.priorityId,
@@ -64,6 +66,7 @@ class RequestModel {
       requesterId: json['requesterId'] ?? 0,
       requesterName: json['requesterName'],
       requesterEmail: json['requesterEmail'],
+      requesterPhone: json['requesterPhone'],
 
       categoryId: json['categoryId'],
       categoryName: json['categoryName'],
